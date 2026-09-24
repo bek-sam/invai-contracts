@@ -196,6 +196,7 @@ export const MISMATCH_REASONS = [
   "unknown_transfer",
   "unknown_blank",
   "wrong_design",
+  "wrong_style",
   "wrong_size",
   "wrong_color",
   "wrong_order",
