@@ -180,6 +180,8 @@ export const ReceiveInput = z.object({
   /** Partial receipts allowed; omitted lines receive nothing. */
   lines: z.array(z.object({ lineId: Id, qty: Qty.positive() })).min(1),
   note: z.string().nullable().default(null),
+  /** Client-generated per-submission key so a retried receipt isn't counted twice. */
+  idempotencyKey: z.string().min(8).max(128).optional(),
 });
 
 export const SupplierInfo = z.object({
