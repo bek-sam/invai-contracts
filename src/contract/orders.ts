@@ -19,6 +19,8 @@ import { base, ItemStateFilter, proc } from "./_base";
 const OrderListFilters = Page.extend({
   status: z.array(z.enum(ORDER_STATUSES)).optional(),
   channel: z.array(z.enum(CHANNELS)).optional(),
+  /** Orders with at least one item in any of these states (e.g. needs_mapping, needs_artwork). */
+  itemState: ItemStateFilter,
   connectionId: Id.optional(),
   atRisk: z.boolean().optional(),
   overdue: z.boolean().optional(),
