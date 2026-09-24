@@ -13,7 +13,9 @@ const ItemState = z.enum(ORDER_ITEM_STATES);
 export const Events = {
   // tenancy
   "company.created": z.object({ orgId: Id, type: z.enum(["shop", "vendor"]) }),
-  "user.invited": z.object({ orgId: Id, userId: Id }),
+  // Payload changed wave 2: nothing emits or consumes this event yet (checked all 8 repos), so
+  // `userId` (no user exists until the invite is accepted) is replaced with `invitationId`.
+  "user.invited": z.object({ orgId: Id, invitationId: Id }),
   // catalog
   "design.updated": z.object({ designId: Id, qaRequested: z.boolean() }),
   "design.qa_completed": z.object({ designId: Id, status: z.enum(["passed", "warn", "failed"]) }),

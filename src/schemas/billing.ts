@@ -37,8 +37,17 @@ export type Usage = z.infer<typeof Usage>;
 export const BillingStatus = z.object({
   plan: Plan,
   usage: Usage,
-  status: z.enum(["trialing", "active", "past_due", "cancelled"]),
+  /** `trial_expired`: past `trialEndsAt` with no active subscription (wave 2). */
+  status: z.enum(["trialing", "active", "past_due", "cancelled", "trial_expired"]),
   trialEndsAt: Timestamp.nullable(),
+  /**
+   * End of the current billing period Stripe is charging for (wave 2). Optional so the T-2-1
+   * implementation can add it without every existing `getStatus` caller changing first; treat a
+   * missing value the same as null (no live subscription yet).
+   */
+  currentPeriodEnd: Timestamp.nullable().optional(),
+  /** The subscription is set to cancel at `currentPeriodEnd` instead of renewing (wave 2, optional — see `currentPeriodEnd`). */
+  cancelAtPeriodEnd: z.boolean().optional(),
   /** Stripe is stubbed in v1: false means changePlan returns no checkout URL. */
   paymentsEnabled: z.boolean(),
   /** What happens when the order limit is hit. Imports continue; the shop is nagged to upgrade. */

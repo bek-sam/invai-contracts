@@ -49,6 +49,17 @@ export const COMMON_ERRORS = {
       limit: z.number(),
     }),
   },
+  /** A paid action while there's no active subscription: trial expired, past due, or cancelled (wave 2). */
+  PAYMENT_REQUIRED: {
+    status: 402,
+    message: "This needs an active plan",
+    data: z.object({ checkoutUrl: z.url().nullable() }),
+  },
+  /** A paid action (label buy, checkout, portal) before the account's email is verified (wave 2). */
+  EMAIL_NOT_VERIFIED: {
+    status: 403,
+    message: "Verify your email first",
+  },
   RATE_LIMITED: {
     status: 429,
     message: "Too many requests",

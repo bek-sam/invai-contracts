@@ -150,6 +150,8 @@ export const PO_STATES = [
   "partially_received",
   "received",
   "cancelled",
+  // Added at the end (additive): the PO's supplier call is in flight (crash-safe submit, wave 1/2).
+  "submitting",
 ] as const;
 export type PoState = (typeof PO_STATES)[number];
 
