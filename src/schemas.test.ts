@@ -102,6 +102,7 @@ describe("schema round-trips", () => {
       hasPersonalization: false,
       hold: null,
       cancel: null,
+      packOverride: null,
       buyerName: "Ana",
       shipTo: null,
       shippingMethod: null,

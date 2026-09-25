@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CHANNELS, ORDER_ITEM_STATES, ORDER_STATUSES, STATIONS } from "../states";
 import { Address, Cents, Id, NamedRef, Timestamp } from "./common";
+import { PackOverride } from "./production";
 
 export const PersonalizationAnswer = z.object({
   question: z.string(),
@@ -172,6 +173,9 @@ export const Order = z.object({
   cancel: z
     .object({ reason: z.enum(CANCEL_REASONS), note: z.string().nullable(), at: Timestamp })
     .nullable(),
+  /** Set when this order was packed with units still missing (production.packOrder override).
+   * Cleared back to null once every non-cancelled unit genuinely reaches packed/shipped/delivered. */
+  packOverride: PackOverride.nullable(),
   buyerName: z.string(),
   /** Null once purged (30 days after delivery) or for roles without orders.manage. */
   shipTo: Address.nullable(),

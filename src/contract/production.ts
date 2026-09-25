@@ -8,6 +8,8 @@ import {
   GangSheet,
   GangSheetDetail,
   Job,
+  PackOrderInput,
+  PackOrderResult,
   QcInput,
   REPRINT_REASONS,
   Reprint,
@@ -16,7 +18,7 @@ import {
   SheetDownloadUrls,
   StationQueue,
 } from "../schemas/production";
-import { SHEET_STATES, STATIONS } from "../states";
+import { ORDER_ITEM_STATES, SHEET_STATES, STATIONS } from "../states";
 import { base, proc } from "./_base";
 
 const batches = base.prefix("/batches").router({
@@ -70,7 +72,7 @@ const sheets = base.prefix("/sheets").router({
     .output(GangSheet)
     .errors({ NO_VENDOR: { status: 400, message: "No vendor connection; add one under Vendors" } }),
   /** Transfers arrived at the shop: every item on the sheet moves on_sheet -> transfer_in. */
-  markReceived: proc("production.build", { auth: "floor" })
+  markReceived: proc("production.receive", { auth: "floor" })
     .route({ method: "POST", path: "/{id}/received" })
     .input(z.object({ id: Id }))
     .output(GangSheet),
@@ -193,6 +195,23 @@ export const production = base
       .route({ method: "POST", path: "/qc" })
       .input(QcInput)
       .output(z.object({ item: OrderItem, reprint: Reprint.nullable() })),
+    /** Marks an order packed once every non-cancelled unit is `packed` (decision 0002). Idempotent
+     * on `idempotencyKey`: a replay returns the stored result. Refuses with `missing[]` when units
+     * are outstanding, unless `override` is set (needs `production.override`; checked in the
+     * handler, not the procedure's own permission, so packers keep calling this without it). */
+    packOrder: proc("production.scan", { auth: "floor" })
+      .route({ method: "POST", path: "/pack-order" })
+      .input(PackOrderInput)
+      .output(PackOrderResult)
+      .errors({
+        PACK_INCOMPLETE: {
+          status: 409,
+          message: "Units are still missing",
+          data: z.object({
+            missing: z.array(z.object({ orderItemId: Id, state: z.enum(ORDER_ITEM_STATES) })),
+          }),
+        },
+      }),
     /** Output per staff member for a day (owner dashboard, capacity planning). */
     staffOutput: proc("production.read")
       .route({ method: "GET", path: "/staff-output" })

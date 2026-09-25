@@ -172,5 +172,5 @@ export type JobState = (typeof JOB_STATES)[number];
 export const CHANNELS = ["etsy", "amazon", "shopify", "tiktok", "walmart", "ebay", "csv"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
-export const STATIONS = ["pick", "press", "qc", "pack"] as const;
+export const STATIONS = ["pick", "press", "qc", "pack", "receiving"] as const;
 export type Station = (typeof STATIONS)[number];

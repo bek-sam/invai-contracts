@@ -313,3 +313,32 @@ export const Bin = z.object({
   updatedAt: Timestamp,
 });
 export type Bin = z.infer<typeof Bin>;
+
+export const PackOrderInput = z.object({
+  orderId: Id,
+  /** Idempotency key, same convention as ReceiveInput.idempotencyKey. A retry with the same
+   * key returns the original result rather than re-evaluating completeness. */
+  idempotencyKey: z.string().min(8).max(128),
+  /** Present only on the "pack anyway" path. */
+  override: z.object({ reason: z.string().min(1).max(500) }).optional(),
+});
+export type PackOrderInput = z.infer<typeof PackOrderInput>;
+
+export const PackOverride = z.object({
+  reason: z.string(),
+  by: Id,
+  byName: z.string(),
+  at: Timestamp,
+  missingItemIds: z.array(Id),
+});
+export type PackOverride = z.infer<typeof PackOverride>;
+
+export const PackOrderResult = z.object({
+  orderId: Id,
+  packed: z.boolean(),
+  /** Present (non-empty) whenever `packed` is false, or when packed was reached via override. */
+  missing: z.array(z.object({ orderItemId: Id, state: z.enum(ORDER_ITEM_STATES) })),
+  /** Non-null only when this call (or an earlier replay under the same order) used the override. */
+  override: PackOverride.nullable(),
+});
+export type PackOrderResult = z.infer<typeof PackOrderResult>;
