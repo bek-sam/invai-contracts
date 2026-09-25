@@ -80,6 +80,19 @@ export const finance = base
         }),
       )
       .output(ProfitSummary),
+    /** Same filters as `profit`, so the export always matches what's on screen. Returns the
+     * file's S3 key. */
+    exportCsv: proc("finance.read")
+      .route({ method: "POST", path: "/profit/export-csv" })
+      .input(
+        z.object({
+          dimension: ProfitDimension,
+          period: Period,
+          channel: z.enum(CHANNELS).optional(),
+          designId: Id.optional(),
+        }),
+      )
+      .output(z.object({ key: z.string() })),
     /** Every cost line for one order, with which parts are estimates. */
     orderProfit: proc("finance.read")
       .route({ method: "GET", path: "/orders/{orderId}" })

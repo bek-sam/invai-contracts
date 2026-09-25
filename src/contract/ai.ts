@@ -140,6 +140,18 @@ export const ai = base
     listings,
     assistant,
     credits,
+    /** One CSV row per variant (not per draft): a draft covering several variants expands to
+     * one row per variant, each with its own real SKU. Returns the file's S3 key. */
+    exportCsv: proc("ai.listings.manage")
+      .route({ method: "POST", path: "/listings/export-csv" })
+      .input(z.object({ draftIds: z.array(Id).min(1).max(500), channel: z.enum(CHANNELS) }))
+      .output(z.object({ key: z.string() }))
+      .errors({
+        CHANNEL_MISMATCH: {
+          status: 400,
+          message: "A draft's channel does not match the export channel",
+        },
+      }),
     /** Deterministic channel-rule validation of arbitrary content (used live while editing). */
     validate: proc("ai.listings.read")
       .route({ method: "POST", path: "/validate" })
