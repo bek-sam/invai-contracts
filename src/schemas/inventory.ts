@@ -99,6 +99,7 @@ export const CountResult = z.object({
   movements: z.array(Movement),
   variance: z.array(z.object({ blankVariantId: Id, expected: Qty, counted: Qty, delta: Qty })),
 });
+export type CountResult = z.infer<typeof CountResult>;
 
 export const ReorderLine = z.object({
   blankVariantId: Id,
@@ -194,6 +195,7 @@ export const SupplierInfo = z.object({
   hasApiKey: z.boolean(),
   variantCount: z.number().int().nonnegative(),
 });
+export type SupplierInfo = z.infer<typeof SupplierInfo>;
 
 export const InventorySettings = z.object({
   suppliers: z.array(
