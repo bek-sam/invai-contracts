@@ -22,6 +22,8 @@ export const Org = z.object({
   timezone: z.string(), // IANA, e.g. America/Phoenix
   plan: PlanKey.nullable(), // null for vendor orgs (the portal is free)
   demo: z.boolean(),
+  /** The shop prints its own DTF sheets (ready → printing → printed, no vendor). */
+  printsInHouse: z.boolean(),
   createdAt: Timestamp,
 });
 export type Org = z.infer<typeof Org>;

@@ -32,7 +32,13 @@ export const me = base
       .output(Me),
     updateOrg: proc("org.manage")
       .route({ method: "PATCH", path: "/org" })
-      .input(z.object({ name: z.string().min(1).optional(), timezone: z.string().optional() }))
+      .input(
+        z.object({
+          name: z.string().min(1).optional(),
+          timezone: z.string().optional(),
+          printsInHouse: z.boolean().optional(),
+        }),
+      )
       .output(Org),
   });
 
