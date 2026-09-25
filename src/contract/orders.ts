@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Placement } from "../schemas/catalog";
 import { SkuRuleInput } from "../schemas/channels";
-import { Id, Page, Period, paginated, SortDir, Timestamp } from "../schemas/common";
+import { Address, Id, Page, Period, paginated, SortDir, Timestamp } from "../schemas/common";
 import {
   CANCEL_REASONS,
   ChannelPerformance,
@@ -89,6 +89,26 @@ export const orders = base
       .route({ method: "PUT", path: "/{id}/tags" })
       .input(z.object({ id: Id, tags: z.array(z.string().min(1).max(40)) }))
       .output(Order),
+    /**
+     * Format-only address fix (no carrier call — the only carrier-verified check,
+     * `shipping.rates`, needs a packed order). Refused once any shipment for the order has a
+     * live label. Releases the `address_check` hold when the write succeeds.
+     */
+    updateAddress: proc("orders.manage")
+      .route({ method: "PATCH", path: "/{id}/address" })
+      .input(z.object({ id: Id, address: Address }))
+      .output(OrderWithItems)
+      .errors({
+        ADDRESS_LOCKED: {
+          status: 409,
+          message: "This order already has a shipping label; void it first",
+        },
+        ADDRESS_INVALID: {
+          status: 422,
+          message: "Ship-to address is not deliverable",
+          data: z.object({ detail: z.string() }),
+        },
+      }),
     /** Counts for the Order Hub sidebar. Same filters as list, minus paging and sorting. */
     counts: proc("orders.read")
       .route({ method: "GET", path: "/counts" })

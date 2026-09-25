@@ -12,7 +12,7 @@ import { orderItems, orders } from "./contract/orders";
 import { personalization } from "./contract/personalization";
 import { production } from "./contract/production";
 import { shipping } from "./contract/shipping";
-import { audit, floor, locations, me, stations, team } from "./contract/tenancy";
+import { audit, demo, floor, locations, me, stations, team } from "./contract/tenancy";
 import { today } from "./contract/today";
 import { vendorPortal, vendors } from "./contract/vendors";
 
@@ -30,6 +30,7 @@ export const contract = {
   stations,
   floor,
   audit,
+  demo,
   // home
   today,
   alerts,

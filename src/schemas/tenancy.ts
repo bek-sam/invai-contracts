@@ -30,11 +30,12 @@ export const USER_STATUSES = ["active", "invited", "deactivated"] as const;
 
 export const User = z.object({
   id: Id,
-  email: z.email(),
+  email: z.email(), // always a real (possibly synthetic, non-deliverable) string
   name: z.string(),
   role: RoleSchema,
   status: z.enum(USER_STATUSES),
   hasPin: z.boolean(), // floor PIN set (never returned)
+  pinOnly: z.boolean().default(false), // NEW: PIN-only floor staff, can't sign in on the web
   lastSeenAt: Timestamp.nullable(),
   createdAt: Timestamp,
 });
@@ -46,6 +47,14 @@ export const OnboardingChecklist = z.object({
   skusMapped: z.boolean(),
   vendorAdded: z.boolean(),
   staffInvited: z.boolean(),
+  shipFromAddress: z.boolean(), // NEW: Location.address or ShippingSettings.fromAddress set
+  carrier: z.boolean(), // NEW: ShippingSettings.allowedCarriers non-empty
+  tabletPaired: z.boolean(), // NEW: any StationDevice has tokenIssuedAt set
+  designsUploaded: z.boolean(), // NEW: catalog designs count > 0
+  costsSet: z.boolean(), // NEW: any blank/design cost record set
+  planChosen: z.boolean(), // NEW: subscription.status !== "trialing", or a plan was explicitly picked
+  dismissed: z.boolean(), // NEW
+  dismissedAt: Timestamp.nullable(), // NEW
 });
 
 /** Who is calling: the user, the active org, the role and its expanded permissions. */

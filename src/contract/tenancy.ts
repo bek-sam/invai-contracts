@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ROLES } from "../roles";
+import { FLOOR_ROLES, ROLES } from "../roles";
 import { Id, Ok, Page, paginated, Timestamp } from "../schemas/common";
 import {
   AUDIT_ACTIONS,
@@ -44,10 +44,47 @@ export const team = base
       .route({ method: "GET", path: "/" })
       .input(Page.extend({ includeDeactivated: z.boolean().default(false) }))
       .output(paginated(User)),
+    /**
+     * `pinOnly: true` (floor roles only) creates a PIN-only member with no email login: the
+     * backend fills a synthetic, non-deliverable placeholder email (Better Auth's `users`
+     * table requires one) and the web/mailer must never treat it as a real address.
+     */
     invite: proc("team.manage")
       .route({ method: "POST", path: "/invite" })
-      .input(z.object({ email: z.email(), name: z.string().min(1), role: z.enum(ROLES) }))
+      .input(
+        z
+          .object({
+            name: z.string().min(1),
+            role: z.enum(ROLES),
+            email: z.email().optional(),
+            pinOnly: z.boolean().default(false),
+          })
+          .refine((v) => v.pinOnly || !!v.email, {
+            message: "email is required unless pinOnly",
+            path: ["email"],
+          })
+          .refine((v) => !v.pinOnly || (FLOOR_ROLES as readonly string[]).includes(v.role), {
+            message: "pinOnly staff must be a floor role (presser, packer or receiver)",
+            path: ["role"],
+          }),
+      )
       .output(User),
+    /** Re-sends the invitation email (resets its expiry). No-op target for `pinOnly` members. */
+    resend: proc("team.manage")
+      .route({ method: "POST", path: "/{userId}/resend" })
+      .input(z.object({ userId: Id }))
+      .output(User)
+      .errors({
+        NOT_INVITED: { status: 409, message: "This teammate has no pending invitation" },
+      }),
+    /** Cancels a pending invitation; the seat is freed. */
+    revoke: proc("team.manage")
+      .route({ method: "POST", path: "/{userId}/revoke" })
+      .input(z.object({ userId: Id }))
+      .output(Ok)
+      .errors({
+        NOT_INVITED: { status: 409, message: "This teammate has no pending invitation" },
+      }),
     changeRole: proc("team.manage")
       .route({ method: "POST", path: "/{userId}/role" })
       .input(z.object({ userId: Id, role: z.enum(ROLES) }))
@@ -159,4 +196,36 @@ export const audit = base
         }),
       )
       .output(paginated(AuditEntry)),
+  });
+
+/**
+ * One demo company per user (found by `companies.demoOwnerUserId`, not by which real org the
+ * user clicked from). Sample-data workspace, isolated by the same `company_id` RLS as any
+ * other company, excluded from billing, marketplace calls and mail. All three return `Me` —
+ * the same shape `me.switchOrg` returns — so the web client updates its session context in one
+ * call instead of a call-then-refetch.
+ *
+ * Permission: `org.read` (every role has it) rather than `none` — `none` is reserved for the
+ * five auth-bootstrap procedures (`contract.test.ts` enforces the exact list); these three
+ * still require a signed-in user of any role, which `org.read` already expresses.
+ */
+export const demo = base
+  .prefix("/tenancy/demo")
+  .tag("tenancy")
+  .router({
+    /** Finds or creates, then (re)seeds, this user's demo company and switches into it. */
+    start: proc("org.read")
+      .route({ method: "POST", path: "/start" })
+      .input(z.object({}))
+      .output(Me),
+    /** Wipes and reseeds the demo company found by `demoOwnerUserId`. */
+    reset: proc("org.read")
+      .route({ method: "POST", path: "/reset" })
+      .input(z.object({}))
+      .output(Me),
+    /** Switches back to the user's primary org; the demo company is kept, not deleted. */
+    leave: proc("org.read")
+      .route({ method: "POST", path: "/leave" })
+      .input(z.object({}))
+      .output(Me),
   });

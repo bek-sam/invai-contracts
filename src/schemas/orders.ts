@@ -210,6 +210,7 @@ export const TIMELINE_KINDS = [
   "tracking_pushed",
   "note",
   "sync",
+  "address_updated", // NEW: written by orders.updateAddress
 ] as const;
 
 export const TimelineEntry = z.object({
