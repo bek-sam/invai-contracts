@@ -2,6 +2,20 @@ import { z } from "zod";
 import { CHANNELS } from "../states";
 import { Cents, DateOnly, Id, Period, Timestamp } from "./common";
 
+/** One dated refund/chargeback event; attributes the refund to its own period (not the order's). */
+export const RefundEvent = z.object({
+  id: Id,
+  orderId: Id,
+  orderItemId: Id.nullable(), // null = order-level (e.g. shipping refund)
+  channel: z.enum(CHANNELS),
+  source: z.enum(["shopify", "csv", "manual"]),
+  amountCents: Cents,
+  feeRecoveredCents: Cents,
+  refundedAt: Timestamp,
+  note: z.string().nullable(),
+});
+export type RefundEvent = z.infer<typeof RefundEvent>;
+
 export const PROFIT_DIMENSIONS = ["order", "design", "blank", "channel", "day"] as const;
 export const ProfitDimension = z.enum(PROFIT_DIMENSIONS);
 

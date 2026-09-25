@@ -72,7 +72,9 @@ describe("contract", () => {
         p.path !== "bins.list" &&
         !p.path.endsWith("suppliers.list") &&
         !p.path.endsWith("bins.list") &&
-        p.path !== "billing.plans"
+        p.path !== "billing.plans" &&
+        // Bounded by orderId (a handful of refunds per order), like orderProfit's line items.
+        p.path !== "finance.refunds.list"
       ) {
         expect(input?.shape, p.path).toHaveProperty("cursor");
         expect(output?.shape, p.path).toHaveProperty("nextCursor");

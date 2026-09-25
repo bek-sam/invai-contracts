@@ -1,5 +1,15 @@
 import { z } from "zod";
-import { DateOnly, Id, JobRef, Ok, Page, Period, paginated } from "../schemas/common";
+import {
+  Cents,
+  DateOnly,
+  Id,
+  JobRef,
+  Ok,
+  Page,
+  Period,
+  paginated,
+  Timestamp,
+} from "../schemas/common";
 import {
   AdSpend,
   AdSpendInput,
@@ -8,6 +18,7 @@ import {
   OrderProfit,
   ProfitDimension,
   ProfitSummary,
+  RefundEvent,
 } from "../schemas/finance";
 import { CHANNELS } from "../states";
 import { base, proc } from "./_base";
@@ -60,12 +71,41 @@ const adSpend = base.prefix("/ad-spend").router({
     ),
 });
 
+/**
+ * T-7-2: dated refund ledger. `refundedAt` (not the order's `placedAt`) is what `profit`'s
+ * period buckets read for the `refunds` cost bucket. Shopify/CSV ingestion upserts by
+ * (companyId, channel, channelRefundId); `record` is the manual CSV path (a new row per call
+ * is correct -- retries are the UI's job, there is no client-supplied idempotency key).
+ */
+const refunds = base.prefix("/refunds").router({
+  record: proc("finance.manage")
+    .route({ method: "POST", path: "/" })
+    .input(
+      z.object({
+        orderId: Id,
+        orderItemId: Id.nullable(),
+        amountCents: Cents,
+        refundedAt: Timestamp,
+        note: z.string().max(500).nullable().default(null),
+      }),
+    )
+    .output(RefundEvent)
+    .errors({
+      INVALID_ORDER_ITEM: { status: 400, message: "Order item does not belong to this order" },
+    }),
+  list: proc("finance.read")
+    .route({ method: "GET", path: "/" })
+    .input(z.object({ orderId: Id }))
+    .output(z.object({ items: z.array(RefundEvent) })),
+});
+
 export const finance = base
   .prefix("/finance")
   .tag("finance")
   .router({
     costSettings,
     adSpend,
+    refunds,
     /** True profit by dimension for a period (from the materialized profit view). */
     profit: proc("finance.read")
       .route({ method: "GET", path: "/profit" })

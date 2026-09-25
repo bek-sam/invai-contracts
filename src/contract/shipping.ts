@@ -136,4 +136,22 @@ export const shipping = base
           data: z.object({ detail: z.string() }),
         },
       }),
+    /**
+     * T-7-1: exports tracking for a CSV-only (pendingApproval adapter) channel to one file.
+     * Query is `trackingPushStatus = 'manual' AND labeledAt >= (since ?? lastExportedAt)`;
+     * re-export re-runs the query and overwrites `exportedAt`.
+     */
+    exportTracking: proc("shipping.manage")
+      .route({ method: "POST", path: "/exports/tracking" })
+      .input(
+        z.object({
+          channel: z.enum(CHANNELS),
+          since: Timestamp.nullable(),
+          until: Timestamp.optional(),
+        }),
+      )
+      .output(z.object({ key: z.string(), count: z.number().int().nonnegative() }))
+      .errors({
+        NOT_CSV_CHANNEL: { status: 400, message: "This channel is not CSV-only" },
+      }),
   });

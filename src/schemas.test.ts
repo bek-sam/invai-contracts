@@ -35,6 +35,7 @@ describe("schema round-trips", () => {
       shippingMethod: "Standard",
       totals: { subtotal: 2499, shipping: 0, tax: 0, discount: 0, total: 2499 },
       buyerNote: null,
+      sourceUpdatedAt: null,
       items: [
         {
           channelLineId: "1",

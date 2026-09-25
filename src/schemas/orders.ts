@@ -48,6 +48,8 @@ export const NormalizedOrder = z.object({
   }),
   buyerNote: z.string().nullable(),
   items: z.array(NormalizedOrderItem).min(1),
+  /** Channel's own "last modified" timestamp; null = channel has no separate signal (staleness check is skipped). */
+  sourceUpdatedAt: Timestamp.nullable(),
 });
 export type NormalizedOrder = z.infer<typeof NormalizedOrder>;
 
@@ -63,6 +65,8 @@ export const ITEM_FLAG_CODES = [
   "address_invalid",
   "reprint",
   "manual_review",
+  // Additive (wave 7, T-7-4): the channel tried to change this unit after it was already pressed.
+  "channel_edit_after_press",
 ] as const;
 
 export const ItemFlag = z.object({
