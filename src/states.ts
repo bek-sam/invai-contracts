@@ -110,6 +110,7 @@ export function deriveOrderStatus(states: readonly OrderItemState[]): OrderStatu
 export const SHEET_STATES = [
   "building",
   "ready",
+  "printing",
   "sent",
   "acknowledged",
   "printed",
@@ -122,7 +123,8 @@ export type SheetState = (typeof SHEET_STATES)[number];
 
 export const SHEET_TRANSITIONS: Record<SheetState, readonly SheetState[]> = {
   building: ["ready", "failed", "cancelled"],
-  ready: ["sent", "building", "cancelled"], // building = regenerate
+  ready: ["sent", "printing", "building", "cancelled"], // printing = in-house path
+  printing: ["printed", "cancelled"],
   sent: ["acknowledged", "printed", "cancelled"],
   acknowledged: ["printed", "cancelled"],
   printed: ["shipped", "received"],

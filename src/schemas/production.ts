@@ -303,7 +303,10 @@ export type Reprint = z.infer<typeof Reprint>;
 
 /** A tote or bin holding one order's units between stations. */
 export const Bin = z.object({
+  id: Id,
   code: z.string(),
+  name: z.string().nullable(),
+  archivedAt: Timestamp.nullable(),
   locationId: Id.nullable(),
   orderId: Id.nullable(),
   orderNo: z.string().nullable(),

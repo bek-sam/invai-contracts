@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, JobRef, Page, paginated, Timestamp } from "../schemas/common";
+import { DateOnly, Id, JobRef, Page, paginated, Timestamp } from "../schemas/common";
 import { OrderItem } from "../schemas/orders";
 import {
   BatchOptions,
@@ -71,6 +71,19 @@ const sheets = base.prefix("/sheets").router({
     )
     .output(GangSheet)
     .errors({ NO_VENDOR: { status: 400, message: "No vendor connection; add one under Vendors" } }),
+  /** In-house path: skips the vendor entirely. Only succeeds when the company prints in-house
+   * and the sheet is `ready`. */
+  markPrinting: proc("production.build")
+    .route({ method: "POST", path: "/{id}/mark-printing" })
+    .input(z.object({ id: Id }))
+    .output(GangSheetDetail)
+    .errors({ FORBIDDEN: { status: 403, message: "Company does not print in-house" } }),
+  /** `printing` -> `printed`. Units then flow to the floor exactly as a vendor-printed sheet
+   * does, via the existing `markReceived` (printed -> received is already a valid transition). */
+  markPrinted: proc("production.build")
+    .route({ method: "POST", path: "/{id}/mark-printed" })
+    .input(z.object({ id: Id }))
+    .output(GangSheetDetail),
   /** Transfers arrived at the shop: every item on the sheet moves on_sheet -> transfer_in. */
   markReceived: proc("production.receive", { auth: "floor" })
     .route({ method: "POST", path: "/{id}/received" })
@@ -130,13 +143,60 @@ const reprints = base.prefix("/reprints").router({
         byReason: z.partialRecord(z.enum(REPRINT_REASONS), z.number().int().nonnegative()),
       }),
     ),
+  /** Count by reason and by week, for the reasons report chart (`stats` only returns one flat
+   * total for the period). */
+  reasonsByWeek: proc("production.read")
+    .route({ method: "GET", path: "/reasons-by-week" })
+    .input(z.object({ from: Timestamp, to: Timestamp }))
+    .output(
+      z.object({
+        weeks: z.array(
+          z.object({
+            weekStart: DateOnly,
+            total: z.number().int().nonnegative(),
+            byReason: z.partialRecord(z.enum(REPRINT_REASONS), z.number().int().nonnegative()),
+          }),
+        ),
+      }),
+    ),
 });
 
 const bins = base.prefix("/bins").router({
   list: proc("production.read", { auth: "floor" })
     .route({ method: "GET", path: "/" })
-    .input(z.object({ locationId: Id.optional(), onlyOccupied: z.boolean().default(false) }))
+    .input(
+      z.object({
+        locationId: Id.optional(),
+        onlyOccupied: z.boolean().default(false),
+        includeArchived: z.boolean().default(false),
+      }),
+    )
     .output(z.object({ items: z.array(Bin) })),
+  create: proc("production.build")
+    .route({ method: "POST", path: "/" })
+    .input(
+      z.object({
+        code: z.string().min(1).max(40),
+        name: z.string().min(1).max(80).nullable().default(null),
+        locationId: Id.optional(),
+      }),
+    )
+    .output(Bin)
+    .errors({ CODE_TAKEN: { status: 409, message: "A bin with this code already exists" } }),
+  rename: proc("production.build")
+    .route({ method: "PATCH", path: "/{id}" })
+    .input(z.object({ id: Id, name: z.string().min(1).max(80) }))
+    .output(Bin),
+  archive: proc("production.build")
+    .route({ method: "POST", path: "/{id}/archive" })
+    .input(z.object({ id: Id }))
+    .output(Bin)
+    .errors({ BIN_OCCUPIED: { status: 409, message: "Bin holds an order" } }),
+  /** A 4x6 or 2x1 PDF of `BIN:` QR labels, merged, for the chosen bins. */
+  labels: proc("production.build")
+    .route({ method: "POST", path: "/labels" })
+    .input(z.object({ binIds: z.array(Id).min(1).max(200) }))
+    .output(z.object({ key: z.string() })),
   /** Put an order in a tote/bin. Scanning a bin code at pick does the same. */
   assign: proc("production.scan", { auth: "floor" })
     .route({ method: "POST", path: "/{code}/assign" })
