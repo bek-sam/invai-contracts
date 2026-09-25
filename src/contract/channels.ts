@@ -59,8 +59,12 @@ export const channels = base
       .errors({ NOT_API_CONNECTION: { status: 400, message: "CSV connections cannot sync" } }),
     /**
      * Import a marketplace CSV export uploaded via files.presignUpload (kind "csv").
-     * Synchronous up to 5,000 rows; rows that fail are reported, the rest import.
-     * Re-importing the same order updates it (idempotent on channel + channelOrderId).
+     * Files at or under the small inline threshold run to completion in the request (short
+     * chunked sub-transactions) and return `status: "completed"|"failed"`, `jobId: null`.
+     * Larger files enqueue a `csv_import` job and return at once with `status: "queued"`,
+     * `jobId` set and zero counts; poll `channels.imports` or `production.jobs.get({ id: jobId })`.
+     * Rows that fail are reported, the rest import. Re-importing the same order updates it
+     * (idempotent on channel + channelOrderId).
      */
     importCsv: proc("channels.import")
       .route({ method: "POST", path: "/{id}/import" })

@@ -85,7 +85,10 @@ export const ImportReport = z.object({
   connectionId: Id,
   format: CsvFormat,
   fileKey: z.string(),
-  status: z.enum(["completed", "failed"]),
+  /** `queued`/`running` only for imports over the sync-inline row threshold; poll via `channels.imports` or `production.jobs.get(jobId)`. */
+  status: z.enum(["completed", "failed", "queued", "running"]),
+  /** Set only when the import runs as a job (over threshold); null for the synchronous path. */
+  jobId: Id.nullable().optional(),
   rowsTotal: z.number().int().nonnegative(),
   ordersImported: z.number().int().nonnegative(),
   ordersUpdated: z.number().int().nonnegative(),

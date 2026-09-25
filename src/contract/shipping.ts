@@ -92,7 +92,11 @@ export const shipping = base
       .input(z.object({ shipmentId: Id, rateId: z.string().min(1) }))
       .output(Shipment)
       .errors({ RATE_EXPIRED: { status: 409, message: "Rates expired; fetch them again" } }),
-    /** Rate + buy for many orders with a strategy. Synchronous up to 100 orders; also returns a job id for progress. */
+    /**
+     * Rate + buy for many orders with a strategy. Always enqueues a `batch_labels` job (crash-safe,
+     * one `buy` per order) and returns immediately with `status: "queued"`, zero counts and `jobId`.
+     * Poll `production.jobs.get({ id: jobId })` for progress, or re-fetch `shipping.queue`.
+     */
     batchBuy: proc("shipping.buy")
       .route({ method: "POST", path: "/batch-buy" })
       .input(

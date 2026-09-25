@@ -100,6 +100,12 @@ export const BATCH_STRATEGIES = ["cheapest", "fastest", "cheapest_on_time"] as c
 
 export const BatchBuyResult = z.object({
   jobId: Id,
+  /**
+   * `queued`: the batch always runs as a job; poll `production.jobs.get(jobId)` (kind `batch_labels`)
+   * or re-fetch `shipping.queue`. Optional (not `.default()`) so existing handler code that builds this
+   * object without the field still typechecks; absent means `"completed"`, same as today's behavior.
+   */
+  status: z.enum(["completed", "queued"]).optional(),
   results: z.array(
     z.object({
       orderId: Id,
