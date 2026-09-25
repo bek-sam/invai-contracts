@@ -205,26 +205,27 @@ export const audit = base
  * the same shape `me.switchOrg` returns — so the web client updates its session context in one
  * call instead of a call-then-refetch.
  *
- * Permission: `org.read` (every role has it) rather than `none` — `none` is reserved for the
- * five auth-bootstrap procedures (`contract.test.ts` enforces the exact list); these three
- * still require a signed-in user of any role, which `org.read` already expresses.
+ * Permission: `today.read` — shop-only (every shop role holds it, vendor doesn't; `demo` is a
+ * shop-only concept and pairs with the Today screen's demo entry point), not `none` (`none` is
+ * reserved for the five auth-bootstrap procedures; `contract.test.ts` enforces the exact list)
+ * and not `org.read` (vendor holds that one too, which let vendor orgs reach `demo.*`).
  */
 export const demo = base
   .prefix("/tenancy/demo")
   .tag("tenancy")
   .router({
     /** Finds or creates, then (re)seeds, this user's demo company and switches into it. */
-    start: proc("org.read")
+    start: proc("today.read")
       .route({ method: "POST", path: "/start" })
       .input(z.object({}))
       .output(Me),
     /** Wipes and reseeds the demo company found by `demoOwnerUserId`. */
-    reset: proc("org.read")
+    reset: proc("today.read")
       .route({ method: "POST", path: "/reset" })
       .input(z.object({}))
       .output(Me),
     /** Switches back to the user's primary org; the demo company is kept, not deleted. */
-    leave: proc("org.read")
+    leave: proc("today.read")
       .route({ method: "POST", path: "/leave" })
       .input(z.object({}))
       .output(Me),
