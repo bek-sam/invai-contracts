@@ -60,6 +60,15 @@ export const COMMON_ERRORS = {
     status: 403,
     message: "Verify your email first",
   },
+  /**
+   * A real-money action (Stripe checkout or portal, a paid plan) inside a sample workspace
+   * (tenancy.demo). Nothing was charged; the caller should say so and point back to the real
+   * shop (wave 6, T-6-5).
+   */
+  DEMO_MODE: {
+    status: 403,
+    message: "This is a sample shop: nothing here can be paid for",
+  },
   RATE_LIMITED: {
     status: 429,
     message: "Too many requests",
