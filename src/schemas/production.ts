@@ -316,10 +316,11 @@ export type Bin = z.infer<typeof Bin>;
 
 export const PackOrderInput = z.object({
   orderId: Id,
-  /** Idempotency key, same convention as ReceiveInput.idempotencyKey. A retry with the same
-   * key returns the original result rather than re-evaluating completeness. */
+  /** Idempotency key, same convention as ReceiveInput.idempotencyKey. Only calls that changed
+   * something are stored. A refused call (`PACK_INCOMPLETE`, `FORBIDDEN`, `CONFLICT`) has no
+   * effect, and a retry re-evaluates. */
   idempotencyKey: z.string().min(8).max(128),
-  /** Present only on the "pack anyway" path. */
+  /** Present only on the "hand to lead" path (decision 0010). */
   override: z.object({ reason: z.string().min(1).max(500) }).optional(),
 });
 export type PackOrderInput = z.infer<typeof PackOrderInput>;
@@ -336,9 +337,10 @@ export type PackOverride = z.infer<typeof PackOverride>;
 export const PackOrderResult = z.object({
   orderId: Id,
   packed: z.boolean(),
-  /** Present (non-empty) whenever `packed` is false, or when packed was reached via override. */
+  /** Non-empty whenever `packed` is false; empty when `packed` is true. */
   missing: z.array(z.object({ orderItemId: Id, state: z.enum(ORDER_ITEM_STATES) })),
-  /** Non-null only when this call (or an earlier replay under the same order) used the override. */
+  /** Non-null when this call (or the stored call under this key) handed the order to a lead;
+   * `packed` is then false (decision 0010: hand-to-lead never marks the order packed). */
   override: PackOverride.nullable(),
 });
 export type PackOrderResult = z.infer<typeof PackOrderResult>;

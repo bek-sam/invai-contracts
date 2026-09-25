@@ -63,7 +63,7 @@ export const PERMISSIONS = [
   "production.build", // batches, sheets, send to vendor, regenerate
   "production.scan", // station scans, bins
   "production.qc", // QC pass/fail, reprint requests
-  "production.override", // pack an order anyway when units are missing
+  "production.override", // hand a short order to a lead when units are missing
   "production.receive", // mark vendor sheets / blank POs received on the floor
   // vendors (shop side) and vendor portal (vendor side)
   "vendors.read",

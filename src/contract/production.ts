@@ -196,9 +196,14 @@ export const production = base
       .input(QcInput)
       .output(z.object({ item: OrderItem, reprint: Reprint.nullable() })),
     /** Marks an order packed once every non-cancelled unit is `packed` (decision 0002). Idempotent
-     * on `idempotencyKey`: a replay returns the stored result. Refuses with `missing[]` when units
-     * are outstanding, unless `override` is set (needs `production.override`; checked in the
-     * handler, not the procedure's own permission, so packers keep calling this without it). */
+     * on `idempotencyKey`: only a call that changed something is stored, and a replay of that key
+     * returns the stored result; a refused call (`PACK_INCOMPLETE`, `FORBIDDEN`, `CONFLICT`) isn't
+     * stored, so a retry re-evaluates. Refuses with `missing[]` when units are outstanding, unless
+     * `override` is set (needs `production.override`; checked in the handler, not the procedure's
+     * own permission, so packers keep calling this without it). An override is "hand to lead"
+     * (decision 0010): it records the reason and the missing units, releases the tote, and returns
+     * `packed: false` with `missing[]` and `override` set — it never changes the order status. The
+     * order ships only once every non-cancelled unit is really packed. */
     packOrder: proc("production.scan", { auth: "floor" })
       .route({ method: "POST", path: "/pack-order" })
       .input(PackOrderInput)

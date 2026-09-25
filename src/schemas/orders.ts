@@ -173,8 +173,8 @@ export const Order = z.object({
   cancel: z
     .object({ reason: z.enum(CANCEL_REASONS), note: z.string().nullable(), at: Timestamp })
     .nullable(),
-  /** Set when this order was packed with units still missing (production.packOrder override).
-   * Cleared back to null once every non-cancelled unit genuinely reaches packed/shipped/delivered. */
+  /** Set when this order was handed to a lead with units missing (production.packOrder override,
+   * decision 0010). Cleared back to null once every non-cancelled unit is really packed. */
   packOverride: PackOverride.nullable(),
   buyerName: z.string(),
   /** Null once purged (30 days after delivery) or for roles without orders.manage. */
