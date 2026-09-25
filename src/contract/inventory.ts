@@ -110,6 +110,19 @@ const purchaseOrders = base.prefix("/purchase-orders").router({
     .route({ method: "POST", path: "/{id}/cancel" })
     .input(z.object({ id: Id }))
     .output(PurchaseOrder),
+  /**
+   * For suppliers with no ordering API (B-86): records that the order was placed by hand.
+   * Valid only from `draft`. Pure state transition, no outbound call, so it's naturally
+   * idempotent: the same ref on an already-`submitted` PO is a no-op; a different ref on a
+   * non-draft PO is `INVALID_TRANSITION`.
+   */
+  markPlaced: proc("purchasing.manage")
+    .route({ method: "POST", path: "/{id}/mark-placed" })
+    .input(z.object({ id: Id, supplierOrderRef: z.string().min(1).max(120) }))
+    .output(PurchaseOrder)
+    .errors({
+      INVALID_TRANSITION: { status: 409, message: "Only a draft PO can be marked placed" },
+    }),
 });
 
 const suppliers = base.prefix("/suppliers").router({
@@ -186,4 +199,9 @@ export const inventory = base
         }),
       )
       .output(PurchaseOrder),
+    /** Renders a merged PDF of QR labels for blanks (bin/shelf labelling); returns its S3 key. */
+    blankLabels: proc("purchasing.manage")
+      .route({ method: "POST", path: "/blanks/labels" })
+      .input(z.object({ variantIds: z.array(Id).min(1).max(200) }))
+      .output(z.object({ key: z.string() })),
   });
