@@ -44,6 +44,8 @@ export const Shipment = z.object({
   labeledAt: Timestamp.nullable(),
   deliveredAt: Timestamp.nullable(),
   voidedAt: Timestamp.nullable(),
+  /** T-7-1: last time this shipment's tracking went into a CSV export (`shipping.exportTracking`). */
+  exportedAt: Timestamp.nullable(),
   createdAt: Timestamp,
   updatedAt: Timestamp,
 });
