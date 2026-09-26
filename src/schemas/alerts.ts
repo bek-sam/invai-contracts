@@ -17,6 +17,9 @@ export const ALERT_KINDS = [
   "qc_fail_spike",
   "ai_spend_cap_tenant", // this company's daily AI spend cap was reached (severity "critical")
   "ai_spend_cap_platform", // the platform-wide daily AI spend cap was reached (severity "critical")
+  "queue_failed_spike", // a background queue's failed jobs grew past a threshold in 15 min ("critical")
+  "outbox_parked", // an outbox event gave up after its retry budget and needs a redrive ("critical")
+  "ai_breaker_fail_open", // the AI spend check could not reach Valkey and let a call through ("critical")
 ] as const;
 
 export const Alert = z.object({
