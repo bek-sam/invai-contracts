@@ -12,6 +12,7 @@ export const SheetSpec = z.object({
   pricePerInch: Cents.nonnegative(),
   spacingIn: z.number().nonnegative(),
   marginIn: z.number().nonnegative(),
+  labelGapIn: z.number().nonnegative().default(0.125), // was hardcoded LABEL_GAP_IN=0.04 in compose.py
   colorProfile: z.string().nullable(),
   /** Vendor's own note, e.g. "mirror not needed, we mirror at RIP". */
   notes: z.string().nullable(),
@@ -48,6 +49,7 @@ export const DEFAULT_SHEET_SPEC: SheetSpec = {
   pricePerInch: 30,
   spacingIn: 0.25,
   marginIn: 0.25,
+  labelGapIn: 0.125,
   colorProfile: null,
   notes: null,
 };
