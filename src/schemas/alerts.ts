@@ -15,6 +15,8 @@ export const ALERT_KINDS = [
   "ai_credits_low",
   "vendor_sheet_received", // vendor org: a shop sent a sheet
   "qc_fail_spike",
+  "ai_spend_cap_tenant", // this company's daily AI spend cap was reached (severity "critical")
+  "ai_spend_cap_platform", // the platform-wide daily AI spend cap was reached (severity "critical")
 ] as const;
 
 export const Alert = z.object({

@@ -10,6 +10,7 @@ import {
   LocationInput,
   Me,
   Org,
+  ProductionPartner,
   StationDevice,
   StationInput,
   StationToken,
@@ -37,6 +38,7 @@ export const me = base
           name: z.string().min(1).optional(),
           timezone: z.string().optional(),
           printsInHouse: z.boolean().optional(),
+          productionPartner: ProductionPartner.nullable().optional(),
         }),
       )
       .output(Org),

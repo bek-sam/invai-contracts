@@ -27,6 +27,34 @@ const CREDIT_ERRORS = {
   },
 } as const;
 
+/** Thrown before any provider.structured/provider.assistant call once a daily cap is hit. */
+const SPEND_CAP_ERRORS = {
+  AI_SPEND_CAP_REACHED: {
+    status: 429,
+    message: "AI spend cap reached; try again after it resets",
+    data: z.object({
+      scope: z.enum(["platform", "tenant"]),
+      capCents: z.number().int().nonnegative(),
+      spentCents: z.number().int().nonnegative(),
+      resetAt: Timestamp,
+    }),
+  },
+} as const;
+
+/** Re-checked live (current `trademark`, not a cached value) in approve, publish and exportCsv. */
+const TRADEMARK_GATE_ERRORS = {
+  HIGH_TRADEMARK_RISK: {
+    status: 409,
+    message: "High trademark risk; this listing cannot be approved, published or exported",
+    data: TrademarkCheck,
+  },
+  TRADEMARK_REVIEW_REQUIRED: {
+    status: 409,
+    message: "Medium trademark risk; a compliance review is required first",
+    data: z.object({ riskScore: z.number().int().min(0).max(100) }),
+  },
+} as const;
+
 const listings = base.prefix("/listings").router({
   /** One draft per channel. Generation runs in the `ai` queue; drafts start `generating`. */
   create: proc("ai.listings.manage")
@@ -58,7 +86,11 @@ const listings = base.prefix("/listings").router({
     .route({ method: "PATCH", path: "/{id}" })
     .input(z.object({ id: Id, content: ListingContent.partial() }))
     .output(ListingDraft),
-  /** Human approval, required before anything is published (Etsy Creativity Standards). */
+  /**
+   * Human approval, required before anything is published (Etsy Creativity Standards).
+   * `acknowledgeRisk` is deprecated: the trademark gate (T-8-4) re-checks the draft's *current*
+   * trademark field live and has no override, so this flag is ignored once that lands.
+   */
   approve: proc("ai.listings.approve")
     .route({ method: "POST", path: "/{id}/approve" })
     .input(z.object({ id: Id, acknowledgeRisk: z.boolean().default(false) }))
@@ -69,21 +101,33 @@ const listings = base.prefix("/listings").router({
         message: "Draft violates channel rules",
         data: ValidationResult,
       },
-      HIGH_TRADEMARK_RISK: {
-        status: 409,
-        message: "High trademark risk; pass acknowledgeRisk to approve anyway",
-        data: TrademarkCheck,
-      },
+      ...TRADEMARK_GATE_ERRORS,
     }),
   reject: proc("ai.listings.approve")
     .route({ method: "POST", path: "/{id}/reject" })
     .input(z.object({ id: Id, reason: z.string().max(500).optional() }))
     .output(ListingDraft),
+  /**
+   * Records a compliance sign-off on a medium-risk draft (25 <= riskScore < 60), required before
+   * approve/publish/export will pass the trademark gate for it.
+   */
+  recordTrademarkReview: proc("ai.listings.approve")
+    .route({ method: "POST", path: "/{id}/trademark-review" })
+    .input(z.object({ id: Id, note: z.string().min(3) }))
+    .output(ListingDraft)
+    .errors({
+      TRADEMARK_REVIEW_NOT_APPLICABLE: {
+        status: 409,
+        message: "Trademark review only applies to medium-risk drafts (25 <= riskScore < 60)",
+        data: TrademarkCheck,
+      },
+    }),
   /** Push an approved draft through the channel adapter (Shopify live; others pending approval / mock). */
   publish: proc("ai.listings.approve")
     .route({ method: "POST", path: "/{id}/publish" })
     .input(z.object({ id: Id, connectionId: Id }))
-    .output(PublishStatus),
+    .output(PublishStatus)
+    .errors(TRADEMARK_GATE_ERRORS),
   publishStatus: proc("ai.listings.read")
     .route({ method: "GET", path: "/{id}/publish-status" })
     .input(z.object({ id: Id }))
@@ -105,7 +149,7 @@ const assistant = base.prefix("/assistant").router({
     .route({ method: "POST", path: "/ask" })
     .input(AssistantAskInput)
     .output(eventIterator(AssistantEvent))
-    .errors(CREDIT_ERRORS),
+    .errors({ ...CREDIT_ERRORS, ...SPEND_CAP_ERRORS }),
   conversations: proc("ai.assistant.ask")
     .route({ method: "GET", path: "/conversations" })
     .input(Page)
@@ -151,6 +195,7 @@ export const ai = base
           status: 400,
           message: "A draft's channel does not match the export channel",
         },
+        ...TRADEMARK_GATE_ERRORS,
       }),
     /** Deterministic channel-rule validation of arbitrary content (used live while editing). */
     validate: proc("ai.listings.read")
@@ -162,5 +207,5 @@ export const ai = base
       .route({ method: "POST", path: "/trademark-check" })
       .input(TrademarkCheckInput)
       .output(TrademarkCheck)
-      .errors(CREDIT_ERRORS),
+      .errors({ ...CREDIT_ERRORS, ...SPEND_CAP_ERRORS }),
   });

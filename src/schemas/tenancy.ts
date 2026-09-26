@@ -14,6 +14,14 @@ export const PLAN_KEYS = ["trial", "starter", "growth", "pro", "scale"] as const
 export const PlanKey = z.enum(PLAN_KEYS);
 export type PlanKey = z.infer<typeof PlanKey>;
 
+/** `companies.settings.productionPartner`. Etsy requires production-partner disclosure. */
+export const ProductionPartner = z.object({
+  name: z.string().min(1),
+  /** Blank until the Etsy adapter is authorized (no live partner IDs yet). */
+  etsyPartnerId: z.string().nullable(),
+});
+export type ProductionPartner = z.infer<typeof ProductionPartner>;
+
 export const Org = z.object({
   id: Id,
   type: OrgType,
@@ -24,6 +32,8 @@ export const Org = z.object({
   demo: z.boolean(),
   /** The shop prints its own DTF sheets (ready → printing → printed, no vendor). */
   printsInHouse: z.boolean(),
+  /** The outside shop that presses/ships for this org, if any (Etsy production-partner disclosure). */
+  productionPartner: ProductionPartner.nullable(),
   createdAt: Timestamp,
 });
 export type Org = z.infer<typeof Org>;
@@ -152,6 +162,7 @@ export const AUDIT_ACTIONS = [
   "data.exported",
   "listing.approved",
   "listing.published",
+  "listing_draft.trademark_review",
 ] as const;
 
 export const AuditEntry = z.object({

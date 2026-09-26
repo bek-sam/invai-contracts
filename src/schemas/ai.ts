@@ -12,11 +12,22 @@ export const ListingContent = z.object({
   price: Cents.nullable(),
   /** Added automatically: AI-use and production-partner disclosures required by the channel. */
   disclosures: z.array(z.string()),
+  /** Filled in at generation time from the company's `productionPartner` setting. Never model-generated. */
+  productionPartner: z.string().nullable(),
 });
 export type ListingContent = z.infer<typeof ListingContent>;
 
 export const ValidationIssue = z.object({
-  field: z.enum(["title", "description", "tags", "bullets", "attributes", "price", "disclosures"]),
+  field: z.enum([
+    "title",
+    "description",
+    "tags",
+    "bullets",
+    "attributes",
+    "price",
+    "disclosures",
+    "productionPartner",
+  ]),
   rule: z.string(), // e.g. "title_max_140"
   message: z.string(),
   index: z.number().int().nonnegative().nullable(), // tag/bullet index
@@ -63,6 +74,14 @@ export const TrademarkCheckInput = z
   })
   .refine((v) => v.text !== undefined || v.designId !== undefined, "text or designId is required");
 
+/** A compliance-officer sign-off recorded on a medium-risk draft (`ai.listings.recordTrademarkReview`). */
+export const TrademarkReview = z.object({
+  reviewedBy: Id,
+  reviewedAt: Timestamp,
+  note: z.string().min(3),
+});
+export type TrademarkReview = z.infer<typeof TrademarkReview>;
+
 export const ListingDraft = z.object({
   id: Id,
   designId: Id,
@@ -74,6 +93,8 @@ export const ListingDraft = z.object({
   content: ListingContent,
   validation: ValidationResult.nullable(),
   trademark: TrademarkCheck.nullable(),
+  /** Set once a compliance review is recorded for a medium-risk draft (25 <= riskScore < 60). */
+  trademarkReview: TrademarkReview.nullable(),
   mockupKeys: z.array(z.string()),
   model: z.string().nullable(),
   creditsUsed: z.number().int().nonnegative(),
