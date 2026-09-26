@@ -18,6 +18,28 @@ export const SheetSpec = z.object({
 });
 export type SheetSpec = z.infer<typeof SheetSpec>;
 
+/**
+ * B-80: `app/pdf.py` (invai-imaging) no longer relies on `/UserUnit` for long PDF pages — some
+ * RIPs/viewers ignore it, so a long sheet printed at the wrong size. Decision: cap, not split.
+ * PNG has no page-size concept, so it keeps its own (higher) ceiling; this only bounds PDF.
+ *
+ * This can't be a `.refine()` on `SheetSpec` itself: `SheetSpec.partial()` is used for spec
+ * updates and invites (`VendorInviteInput` below, and the `vendors.update` contract), and zod v4
+ * drops `.partial()`/`.pick()`/etc. from an object once it carries a refinement. A partial spec
+ * update can't be checked in isolation anyway (it may omit `format` or `maxLengthIn` entirely),
+ * so this runs on the *complete* spec (existing + update merged) at sheet-spec save —
+ * `invai-backend/src/modules/vendors/service.ts`. `write_image_pdf` keeps its own `ImageError`
+ * as a second line of defense in case a sheet is ever queued with a spec that skipped this.
+ */
+export const PDF_MAX_LENGTH_IN = 200;
+
+export function sheetSpecPdfCapError(spec: Pick<SheetSpec, "format" | "maxLengthIn">): string | null {
+  if (spec.format === "pdf" && spec.maxLengthIn > PDF_MAX_LENGTH_IN) {
+    return `PDF sheets are capped at ${PDF_MAX_LENGTH_IN}in; use PNG for longer runs.`;
+  }
+  return null;
+}
+
 export const DEFAULT_SHEET_SPEC: SheetSpec = {
   widthIn: 22,
   maxLengthIn: 240,
