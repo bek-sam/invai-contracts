@@ -92,6 +92,22 @@ const refunds = base.prefix("/refunds").router({
     .output(RefundEvent)
     .errors({
       INVALID_ORDER_ITEM: { status: 400, message: "Order item does not belong to this order" },
+      /** The refund plus the order's earlier refunds would exceed what the order sold for. */
+      REFUND_EXCEEDS_ORDER: {
+        status: 400,
+        message: "The refund is more than what is left to refund on this order",
+        data: z.object({ remainingCents: Cents }),
+      },
+    }),
+  /** Void a manual refund entered by mistake: audited, dated, and it stops counting in profit.
+   * Channel refunds (Shopify, CSV) can't be voided here; the next sync is their source of truth. */
+  void: proc("finance.manage")
+    .route({ method: "POST", path: "/{id}/void" })
+    .input(z.object({ id: Id, reason: z.string().trim().min(1).max(500) }))
+    .output(RefundEvent)
+    .errors({
+      REFUND_NOT_MANUAL: { status: 400, message: "Only a manually recorded refund can be voided" },
+      REFUND_ALREADY_VOIDED: { status: 409, message: "This refund is already voided" },
     }),
   list: proc("finance.read")
     .route({ method: "GET", path: "/" })

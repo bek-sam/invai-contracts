@@ -13,6 +13,9 @@ export const RefundEvent = z.object({
   feeRecoveredCents: Cents,
   refundedAt: Timestamp,
   note: z.string().nullable(),
+  /** Set when a manual refund was voided (entered by mistake); a voided refund counts nowhere. */
+  voidedAt: Timestamp.nullable(),
+  voidReason: z.string().nullable(),
 });
 export type RefundEvent = z.infer<typeof RefundEvent>;
 
