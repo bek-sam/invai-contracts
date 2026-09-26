@@ -35,7 +35,9 @@ export type SheetSpec = z.infer<typeof SheetSpec>;
  */
 export const PDF_MAX_LENGTH_IN = 200;
 
-export function sheetSpecPdfCapError(spec: Pick<SheetSpec, "format" | "maxLengthIn">): string | null {
+export function sheetSpecPdfCapError(
+  spec: Pick<SheetSpec, "format" | "maxLengthIn">,
+): string | null {
   if (spec.format === "pdf" && spec.maxLengthIn > PDF_MAX_LENGTH_IN) {
     return `PDF sheets are capped at ${PDF_MAX_LENGTH_IN}in; use PNG for longer runs.`;
   }
