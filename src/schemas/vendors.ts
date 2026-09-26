@@ -4,10 +4,11 @@ import { GangSheet, SheetPlacement } from "./production";
 
 /** The vendor's output spec; drives imaging /nest and /compose. */
 export const SheetSpec = z.object({
-  widthIn: Inches,
-  maxLengthIn: Inches,
+  /** Bounds match invai-imaging's /nest and /compose (T-9-5): film ≤ 60in wide, ≤ 240in long. */
+  widthIn: Inches.max(60),
+  maxLengthIn: Inches.max(240),
   format: z.enum(["png", "pdf"]),
-  dpi: z.number().int().positive(),
+  dpi: z.number().int().min(36).max(1200),
   /** Cents per linear inch of film; total = lengthIn × pricePerInch. */
   pricePerInch: Cents.nonnegative(),
   spacingIn: z.number().nonnegative(),
