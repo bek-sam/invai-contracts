@@ -69,6 +69,16 @@ export const COMMON_ERRORS = {
     status: 403,
     message: "This is a sample shop: nothing here can be paid for",
   },
+  /**
+   * A floor tablet (floor or station auth) running a contract version below the backend's
+   * `MIN_FLOOR_CONTRACT_VERSION`, or sending no `X-Contract-Version` header. The floor shows its
+   * "Update needed" screen and never retries (T-13-1, ADR 0012).
+   */
+  CLIENT_TOO_OLD: {
+    status: 426,
+    message: "This app is out of date. Update it to continue",
+    data: z.object({ minVersion: z.string(), current: z.string().nullable() }),
+  },
   RATE_LIMITED: {
     status: 429,
     message: "Too many requests",

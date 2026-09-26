@@ -1,4 +1,5 @@
 export * from "./channels";
+export * from "./compat";
 export type { Contract, ProcedureInfo } from "./contract";
 export { contract, listProcedures, PROCEDURE_PERMISSIONS } from "./contract";
 export { type AuthMode, COMMON_ERRORS, type ProcedureMeta } from "./contract/_base";
