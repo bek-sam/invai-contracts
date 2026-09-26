@@ -153,7 +153,7 @@ export const AssistantEvent = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("error"),
     message: z.string(),
-    code: z.enum(["credits_exhausted", "rate_limited", "refusal", "internal"]),
+    code: z.enum(["credits_exhausted", "rate_limited", "refusal", "spend_cap", "internal"]),
   }),
   z.object({
     type: z.literal("done"),
