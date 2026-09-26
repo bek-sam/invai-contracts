@@ -3,6 +3,7 @@ import pkg from "../package.json" with { type: "json" };
 import {
   CONTRACT_VERSION,
   compareContractVersions,
+  FLOOR_COMPAT_BASELINE,
   isContractVersionAtLeast,
   parseContractVersion,
 } from "./compat";
@@ -10,6 +11,11 @@ import {
 describe("contract version handshake helpers", () => {
   it("CONTRACT_VERSION matches package.json", () => {
     expect(CONTRACT_VERSION).toBe(pkg.version);
+  });
+
+  it("the floor baseline is a real version no newer than CONTRACT_VERSION", () => {
+    expect(parseContractVersion(FLOOR_COMPAT_BASELINE)).not.toBeNull();
+    expect(compareContractVersions(FLOOR_COMPAT_BASELINE, CONTRACT_VERSION)).toBeLessThanOrEqual(0);
   });
 
   it("parses x.y.z and rejects garbage", () => {

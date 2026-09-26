@@ -7,6 +7,14 @@
  */
 export const CONTRACT_VERSION = "0.3.0";
 
+/**
+ * Oldest contracts version whose floor/station-facing shapes the backend still accepts: the
+ * default for the backend's `MIN_FLOOR_CONTRACT_VERSION`. Raised by hand only when a floor-facing
+ * breaking change's 14-day window closes (ADR 0012 §5), with a CHANGELOG line saying so. Never
+ * tied to `CONTRACT_VERSION`, so a web-only or additive bump doesn't make tablets update.
+ */
+export const FLOOR_COMPAT_BASELINE = "0.3.0";
+
 /** Header name (HTTP headers are case-insensitive; Node/fetch lower-case it). */
 export const CONTRACT_VERSION_HEADER = "x-contract-version";
 
