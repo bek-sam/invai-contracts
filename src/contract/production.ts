@@ -245,11 +245,6 @@ export const production = base
       .route({ method: "POST", path: "/scans" })
       .input(ScanInput)
       .output(ScanResult),
-    /** Replay of queued offline scans, in order. Results come back in the same order. */
-    scanBatch: proc("production.scan", { auth: "floor" })
-      .route({ method: "POST", path: "/scans/batch" })
-      .input(z.object({ scans: z.array(ScanInput).min(1).max(200) }))
-      .output(z.object({ results: z.array(ScanResult) })),
     /** QC pass -> packed; fail -> ready with a reprint requested and the reason recorded. */
     qc: proc("production.qc", { auth: "floor" })
       .route({ method: "POST", path: "/qc" })

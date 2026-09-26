@@ -22,7 +22,6 @@ export const Events = {
   // channels
   "connection.connected": z.object({ connectionId: Id }),
   "connection.sync_failed": z.object({ connectionId: Id, error: z.string() }),
-  "listing.synced": z.object({ connectionId: Id, listingIds: z.array(z.string()) }),
   "import.completed": z.object({ importId: Id, connectionId: Id, orderIds: z.array(Id) }),
   "sku_rule.learned": z.object({ ruleId: Id, channelSku: z.string() }),
   // orders

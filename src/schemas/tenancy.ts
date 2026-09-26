@@ -30,6 +30,10 @@ export const Org = z.object({
   timezone: z.string(), // IANA, e.g. America/Phoenix
   plan: PlanKey.nullable(), // null for vendor orgs (the portal is free)
   demo: z.boolean(),
+  /** This user's own sample workspace (tenancy.demo, `companies.demoOwnerUserId`), not merely a
+   * shop flagged `demo` (the seeded Desert Bloom has `demo: true` and `demoOwned: false`). B-110:
+   * the web detects the sample workspace by this, not by the `demo-<id>` slug heuristic. */
+  demoOwned: z.boolean(),
   /** The shop prints its own DTF sheets (ready → printing → printed, no vendor). */
   printsInHouse: z.boolean(),
   /** The outside shop that presses/ships for this org, if any (Etsy production-partner disclosure). */
