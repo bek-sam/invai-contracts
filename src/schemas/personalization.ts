@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { Id, Inches, Timestamp } from "./common";
 
-/** Fonts installed on the imaging service (v1-plan 5.1a); unknown names fall back to Inter. */
+/** Fonts installed on the imaging service (v1-plan 5.1a); an unknown name is rejected, not
+ * silently swapped for Inter (B-81). */
 export const TEMPLATE_FONTS = [
   "Inter",
   "Inter Bold",
@@ -11,16 +12,30 @@ export const TEMPLATE_FONTS = [
   "Bebas Neue",
 ] as const;
 
-/** Mirrors imaging POST /render/personalization slots (v1-plan 5.1). Text slots only in v1. */
+/** Mirrors imaging POST /render/personalization slots (v1-plan 5.1, B-81). */
 export const TemplateSlot = z.object({
   name: z.string().min(1).max(40),
-  kind: z.literal("text"),
+  kind: z.enum(["text", "photo"]),
   xIn: z.number().nonnegative(),
   yIn: z.number().nonnegative(),
   wIn: Inches,
   hIn: Inches,
-  fontFamily: z.string(),
+  fontFamily: z.enum(TEMPLATE_FONTS),
   fontSizePt: z.number().positive(),
+  /** Absolute shrink floor in points; null means the 60%-of-size default. The larger of the two
+   * floors wins, so a slot never shrinks past whichever is more generous. */
+  minFontSizePt: z.number().positive().nullable().default(null),
+  /** Text wraps within the slot box, up to this many lines; null means unlimited. */
+  maxLines: z.number().int().positive().nullable().default(null),
+  /** Outline, for printing light text on dark shirts. */
+  strokeWidthPt: z.number().nonnegative().default(0),
+  strokeColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .nullable()
+    .default(null),
+  /** Photo slots only: fit (letterboxed, whole photo visible) or fill (cropped to cover). */
+  fit: z.enum(["fit", "fill"]).default("fit"),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   align: z.enum(["left", "center", "right"]),
   maxChars: z.number().int().positive().nullable(),
@@ -46,14 +61,33 @@ export const PersonalizationTemplate = z.object({
 });
 export type PersonalizationTemplate = z.infer<typeof PersonalizationTemplate>;
 
-export const PersonalizationTemplateInput = z.object({
+// Kept unrefined so the update route can still call `.partial()` on it (zod v4 refuses
+// `.partial()` on a schema with `.refine()`s); `PersonalizationTemplateInput` below adds the
+// fast-fail checks for create, where the full shape is always present.
+export const PersonalizationTemplateInputShape = z.object({
   name: z.string().min(1),
-  widthIn: Inches,
-  heightIn: Inches,
+  widthIn: Inches.max(60),
+  heightIn: Inches.max(60),
   backgroundKey: z.string().nullable().default(null),
-  dpi: z.number().int().positive().default(300),
+  dpi: z.number().int().min(36).max(1200).default(300),
   slots: z.array(TemplateSlot).min(1),
 });
+
+export const PersonalizationTemplateInput = PersonalizationTemplateInputShape.refine(
+  (t) => {
+    const names = new Set<string>();
+    for (const s of t.slots) {
+      if (names.has(s.name)) return false;
+      names.add(s.name);
+    }
+    return true;
+  },
+  { message: "Slot names must be unique", path: ["slots"] },
+).refine(
+  (t) =>
+    t.slots.every((s) => s.xIn + s.wIn <= t.widthIn + 1e-6 && s.yIn + s.hIn <= t.heightIn + 1e-6),
+  { message: "Every slot must stay inside the template's width/height", path: ["slots"] },
+);
 
 /** Mirrors imaging render flags plus the AI personalization check. */
 export const ARTWORK_FLAG_CODES = [
@@ -64,6 +98,8 @@ export const ARTWORK_FLAG_CODES = [
   "possible_typo",
   "odd_date",
   "missing_answer",
+  "missing_glyphs",
+  "low_res_photo",
 ] as const;
 
 export const ArtworkFlag = z.object({

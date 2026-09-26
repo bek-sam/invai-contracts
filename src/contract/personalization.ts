@@ -5,6 +5,7 @@ import {
   ItemArtwork,
   PersonalizationTemplate,
   PersonalizationTemplateInput,
+  PersonalizationTemplateInputShape,
   RenderPreview,
 } from "../schemas/personalization";
 import { base, proc } from "./_base";
@@ -24,7 +25,7 @@ const templates = base.prefix("/templates").router({
     .output(PersonalizationTemplate),
   update: proc("personalization.manage")
     .route({ method: "PATCH", path: "/{id}" })
-    .input(PersonalizationTemplateInput.partial().extend({ id: Id }))
+    .input(PersonalizationTemplateInputShape.partial().extend({ id: Id }))
     .output(PersonalizationTemplate),
   delete: proc("personalization.manage")
     .route({ method: "DELETE", path: "/{id}" })
