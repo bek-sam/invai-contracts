@@ -163,6 +163,10 @@ export const AUDIT_ACTIONS = [
   "listing.approved",
   "listing.published",
   "listing_draft.trademark_review",
+  "tenant.export_requested",
+  "tenant.delete_requested",
+  "tenant.delete_cancelled",
+  "tenant.purged",
 ] as const;
 
 export const AuditEntry = z.object({

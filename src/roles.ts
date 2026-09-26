@@ -34,6 +34,8 @@ export const PERMISSIONS = [
   // tenancy
   "org.read",
   "org.manage",
+  "org.export", // whole-company data export (owner only)
+  "org.delete", // whole-company deletion request and cancel (owner only)
   "team.read",
   "team.manage",
   "stations.manage",
@@ -99,6 +101,9 @@ export const PERMISSIONS = [
 export type Permission = (typeof PERMISSIONS)[number];
 
 const SHOP_ALL = PERMISSIONS.filter((p) => !p.startsWith("vendor_portal."));
+
+/** Permissions only the company owner holds, never a bare admin. */
+const OWNER_ONLY: Permission[] = ["billing.manage", "org.export", "org.delete"];
 
 const OFFICE: Permission[] = [
   "org.read",
@@ -209,7 +214,8 @@ const VENDOR: Permission[] = [
 
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: SHOP_ALL,
-  admin: SHOP_ALL.filter((p) => p !== "billing.manage"),
+  // Owner-only actions: billing, and exporting or deleting the whole company (B-23).
+  admin: SHOP_ALL.filter((p) => !OWNER_ONLY.includes(p)),
   office: OFFICE,
   designer: DESIGNER,
   presser: PRESSER,

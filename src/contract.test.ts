@@ -43,7 +43,7 @@ describe("contract", () => {
     for (const p of procedures.filter((p) => p.method === "GET")) {
       // GET inputs are query params; a path param must exist in the input schema.
       expect(p.httpPath).not.toMatch(
-        /\{(?!id|orderItemId|blankVariantId|userId|code|purchaseOrderId|shipmentId|orderId)\w+\}/,
+        /\{(?!id|orderItemId|blankVariantId|userId|code|purchaseOrderId|shipmentId|orderId|jobId)\w+\}/,
       );
     }
   });

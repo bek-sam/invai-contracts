@@ -14,6 +14,7 @@ export const Job = z.object({
     "listing_drafts",
     "profit_recompute",
     "sync",
+    "tenant_export",
   ]),
   status: z.enum(JOB_STATES),
   progress: Ratio,

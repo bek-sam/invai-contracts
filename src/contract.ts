@@ -10,6 +10,7 @@ import { finance } from "./contract/finance";
 import { inventory } from "./contract/inventory";
 import { orderItems, orders } from "./contract/orders";
 import { personalization } from "./contract/personalization";
+import { privacy } from "./contract/privacy";
 import { production } from "./contract/production";
 import { shipping } from "./contract/shipping";
 import { audit, demo, floor, locations, me, stations, team } from "./contract/tenancy";
@@ -56,6 +57,8 @@ export const contract = {
   finance,
   ai,
   billing,
+  // whole-company export and deletion (B-23)
+  privacy,
 };
 
 export type Contract = typeof contract;

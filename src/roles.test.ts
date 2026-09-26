@@ -14,6 +14,10 @@ describe("ROLE_PERMISSIONS", () => {
     const shopPerms = PERMISSIONS.filter((p) => !p.startsWith("vendor_portal."));
     for (const p of shopPerms) expect(hasPermission("owner", p), p).toBe(true);
     expect(hasPermission("admin", "billing.manage")).toBe(false);
+    // Whole-company export and deletion are the owner's alone (B-23).
+    for (const p of ["org.export", "org.delete"] as const)
+      for (const role of ROLES.filter((r) => r !== "owner"))
+        expect(hasPermission(role, p), role).toBe(false);
     expect(hasPermission("admin", "team.manage")).toBe(true);
   });
 
