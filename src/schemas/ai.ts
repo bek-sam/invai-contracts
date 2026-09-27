@@ -146,6 +146,14 @@ export const AssistantEvent = z.discriminatedUnion("type", [
       "get_stock",
       "get_listing_performance",
       "get_channel_performance",
+      // Added in wave 17 (T-17-1, spec assistant-business-analyst): additive, enum values at the
+      // end. get_production_status already existed as a backend-only tool (T-13); the other four
+      // are new analyst tools built in T-17-2.
+      "get_production_status",
+      "compare_periods",
+      "get_ad_performance",
+      "get_design_insights",
+      "get_fulfillment_health",
     ]),
     input: z.record(z.string(), z.unknown()),
   }),

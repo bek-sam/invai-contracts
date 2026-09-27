@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0
+
+Assistant analyst tool names (T-17-1, wave 17, `specs/assistant-business-analyst.md`). Not
+floor-facing: `FLOOR_COMPAT_BASELINE` stays at 0.3.0 (the floor never reads `AssistantEvent`).
+
+- **Added** five values to `AssistantEvent`'s `tool_call.name` enum (`src/schemas/ai.ts`), at the
+  end, additive: `get_production_status`, `compare_periods`, `get_ad_performance`,
+  `get_design_insights`, `get_fulfillment_health`. `get_production_status` already existed as a
+  backend-only tool (T-13) that `invai-backend/src/modules/ai/service.ts` special-cased out of the
+  stream because the contract didn't know it; that workaround can be removed once T-17-3 lands (it
+  sits outside this card's owned paths). The other four are new analyst tools built in T-17-2.
+- **Version decision: minor bump (0.4.0 -> 0.5.0), not patch.** No `T-13-2` version-check script
+  exists yet (`invai-docs/waves/13/T-13-2.md` was planned but never built: no report, no
+  `check:consumers` script, no CI step). Deciding by hand: this repo's convention (every prior
+  entry in this file, breaking or not) has bumped the minor digit on every contract change while
+  the package sits at 0.x, per the README rule "bump the minor version on 0.x". Standard semver
+  also treats a backward-compatible enum addition as a feature addition (MINOR), never a fix
+  (PATCH). A patch bump would be a mismatch either way, so minor is correct under both readings.
+  This change is additive-only (new enum members appended, nothing removed or reordered) and
+  needs no deprecation window.
+
 ## 0.4.0
 
 Contract drift cleanup (T-13-3, B-104, B-110). Not floor-facing: `FLOOR_COMPAT_BASELINE` stays at 0.3.0.
