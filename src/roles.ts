@@ -97,6 +97,10 @@ export const PERMISSIONS = [
   "billing.read",
   "billing.manage",
   "alerts.read",
+  // market signals (wave 18). Correcting a design's niche: office lacks catalog.manage and no
+  // existing permission fits, so it gets its own. Reading niches is catalog.read;
+  // recommendations are finance.read.
+  "market.niches.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -143,6 +147,7 @@ const OFFICE: Permission[] = [
   "ai.assistant.ask",
   "ai.credits.read",
   "alerts.read",
+  "market.niches.manage",
 ];
 
 const DESIGNER: Permission[] = [
@@ -164,6 +169,7 @@ const DESIGNER: Permission[] = [
   "ai.trademark.check",
   "ai.credits.read",
   "alerts.read",
+  "market.niches.manage",
 ];
 
 const PRESSER: Permission[] = [

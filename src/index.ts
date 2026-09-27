@@ -15,6 +15,7 @@ export * from "./schemas/common";
 export * from "./schemas/files";
 export * from "./schemas/finance";
 export * from "./schemas/inventory";
+export * from "./schemas/market";
 export * from "./schemas/orders";
 export * from "./schemas/personalization";
 export * from "./schemas/production";

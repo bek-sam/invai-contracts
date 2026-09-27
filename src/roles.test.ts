@@ -41,6 +41,13 @@ describe("ROLE_PERMISSIONS", () => {
     expect(hasPermission("receiver", "purchasing.receive")).toBe(true);
   });
 
+  it("market.niches.manage: shop admins, office and designer; never floor roles or vendors", () => {
+    for (const role of ["owner", "admin", "office", "designer"] as const)
+      expect(hasPermission(role, "market.niches.manage"), role).toBe(true);
+    for (const role of ["presser", "packer", "receiver", "vendor"] as const)
+      expect(hasPermission(role, "market.niches.manage"), role).toBe(false);
+  });
+
   it("every permission is granted to at least one role", () => {
     for (const p of PERMISSIONS) {
       expect(

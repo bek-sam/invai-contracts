@@ -8,6 +8,7 @@ import { channels, skuRules } from "./contract/channels";
 import { files } from "./contract/files";
 import { finance } from "./contract/finance";
 import { inventory } from "./contract/inventory";
+import { market } from "./contract/market";
 import { orderItems, orders } from "./contract/orders";
 import { personalization } from "./contract/personalization";
 import { privacy } from "./contract/privacy";
@@ -56,6 +57,8 @@ export const contract = {
   // money and AI
   finance,
   ai,
+  // market signals: niche taxonomy, design niches, recommendation feed and votes (wave 18)
+  market,
   billing,
   // whole-company export and deletion (B-23)
   privacy,

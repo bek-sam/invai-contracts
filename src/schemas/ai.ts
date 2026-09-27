@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CHANNELS, LISTING_DRAFT_STATES } from "../states";
 import { Cents, Id, Timestamp } from "./common";
+import { RecommendationRef, SignalSourceRef } from "./market";
 
 export const ListingContent = z.object({
   title: z.string(),
@@ -154,10 +155,30 @@ export const AssistantEvent = z.discriminatedUnion("type", [
       "get_ad_performance",
       "get_design_insights",
       "get_fulfillment_health",
+      // Added in wave 18 (T-18-1, spec market-signals): the four read-only market tools, built
+      // in T-18-4. Additive, at the end.
+      "get_market_trend",
+      "get_seasonality",
+      "get_price_position",
+      "simulate_price",
     ]),
     input: z.record(z.string(), z.unknown()),
   }),
-  z.object({ type: z.literal("tool_result"), name: z.string(), summary: z.string() }),
+  z.object({
+    type: z.literal("tool_result"),
+    name: z.string(),
+    summary: z.string(),
+    // Wave 18 (T-18-1): market tools carry their provenance and the recommendations they showed,
+    // so the web renders the "Sample data" badge and the vote cards from the event, not from the
+    // answer text. All optional: the wave 17 tools never set them. No new union member (an
+    // exhaustive switch on `type` must keep compiling).
+    /** True when any source behind this result is a mock. */
+    mock: z.boolean().optional(),
+    /** Source and date of every outside fact in the result. */
+    sources: z.array(SignalSourceRef).optional(),
+    /** Recommendations shown in this result (at most 3 per tool); each gets a vote card. */
+    recommendations: z.array(RecommendationRef).max(3).optional(),
+  }),
   z.object({
     type: z.literal("error"),
     message: z.string(),
@@ -177,6 +198,14 @@ export const AssistantMessage = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string(),
   createdAt: Timestamp,
+  /**
+   * Wave 18: the recommendations this assistant message showed, stored with the message so the
+   * vote cards survive a reload (`market.recommendations.list({ ids })` refreshes their vote).
+   * Absent on user messages and on messages from before wave 18.
+   */
+  recommendations: z.array(RecommendationRef).optional(),
+  /** True when any tool result in this message rested on a mock source. */
+  mock: z.boolean().optional(),
 });
 
 export const AssistantConversation = z.object({
