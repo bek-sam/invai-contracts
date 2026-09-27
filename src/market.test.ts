@@ -360,8 +360,8 @@ describe("assistant event additions are additive (card AC1)", () => {
 });
 
 describe("version", () => {
-  it("is 0.6.0 and the floor baseline is untouched (nothing here is floor-facing, ADR 0012)", () => {
-    expect(CONTRACT_VERSION).toBe("0.6.0");
+  it("is 0.6.1 and the floor baseline is untouched (nothing here is floor-facing, ADR 0012)", () => {
+    expect(CONTRACT_VERSION).toBe("0.6.1");
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

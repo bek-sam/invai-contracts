@@ -37,7 +37,7 @@ Rules:
 | `src/events.ts` | Outbox `Events` (name -> payload schema) for the worker |
 | `src/realtime.ts` | SSE `RealtimeEvents` for browsers and tablets, `REALTIME_SSE_PATH` |
 
-Namespaces (190 procedures):
+Namespaces (195 procedures):
 
 | Namespace | Domain file | Covers |
 | --- | --- | --- |
@@ -55,6 +55,7 @@ Namespaces (190 procedures):
 | `shipping` | `shipping` | ship queue, rates, buy, batch buy, batch label PDF, void, shipments, settings, tracking push |
 | `finance` | `finance` | profit by dimension, order profit breakdown, cost settings, ad spend |
 | `ai` | `ai` | listing drafts, validation, trademark check, streamed assistant, credits |
+| `market` | `market` | niche taxonomy, a design's niches (get/shop-correct), demand/price recommendations for the assistant (list/vote) |
 | `billing` | `billing` | plan, usage vs limits, change plan (Stripe stubbed) |
 
 ## How to add a procedure
@@ -93,7 +94,7 @@ Namespaces (190 procedures):
 - Roles: `owner`, `admin`, `office`, `designer`, `presser`, `packer`, `receiver` in a shop
   org, `vendor` in a vendor org (`Org.type` is `shop` or `vendor`).
 - Permissions are `<area>.<verb>` strings in `PERMISSIONS` (e.g. `orders.manage`,
-  `production.scan`, `vendor_portal.update`). `ROLE_PERMISSIONS[role]` expands a role;
+  `production.scan`, `vendor_portal.update`, `market.niches.manage`). `ROLE_PERMISSIONS[role]` expands a role;
   `Me.permissions` returns the expanded list so the UI can hide what a user cannot do.
 - Every procedure declares one permission in its meta (`proc("orders.read")`). The backend
   middleware reads `procedure['~orpc'].meta.permission` and throws `FORBIDDEN` with

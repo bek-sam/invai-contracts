@@ -225,6 +225,7 @@ export const CREDIT_KINDS = [
   "personalization_check",
   "assistant",
   "mockup",
+  "market_niche",
 ] as const;
 
 export const CreditsBalance = z.object({

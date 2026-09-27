@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1
+
+Follow-up to T-18-1. Additive only; not floor-facing (`FLOOR_COMPAT_BASELINE` stays at 0.3.0).
+
+- **Added** `market_niche` to `CREDIT_KINDS` (`src/schemas/ai.ts`, end of the enum), so the AI
+  credit ledger can record niche-assignment usage once the backend's `CREDIT_KINDS` mirror
+  picks it up (backend follow-up, ai-engineer's grant, not this repo's).
+- README: `market` row added to the namespace table (195 procedures) and `market.niches.manage`
+  added to the permission-model example list (both were missed in 0.6.0).
+
 ## 0.6.0
 
 Market signals for the assistant (T-18-1, wave 18, `specs/market-signals.md`, ADR 0014 fences,
