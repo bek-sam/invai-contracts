@@ -134,10 +134,16 @@ build to the same thing:
   preference off with source `unsubscribe_link`, and answers 200 on a repeat (idempotent). Undo:
   `POST` JSON `{ "undo": true }` on the same token, allowed only within 24 h of that unsubscribe
   (else 409; the page says to sign in). This is what the web's Undo button calls.
-- `GET /l/:token`: never mutates. `unsubscribe` -> 302 `${WEB_ORIGIN}/unsubscribe?token=...` (the
-  web renders the confirm page and POSTs); `click` -> the registered handler records the click and
-  answers 302 `${WEB_ORIGIN}${path}` where `path` starts with `/`, not `//`, and has no `\` or
-  scheme (else `/`). The API origin serves `default-src 'none'`, so no HTML is ever rendered there.
+- `GET /l/:token`: never changes a person's email preference or unsubscribe state — only `POST`
+  with `k: unsubscribe` does that. `unsubscribe` -> 302 `${WEB_ORIGIN}/unsubscribe?token=...` (the
+  web renders the confirm page and POSTs). `click` -> the GET performs exactly one write: it
+  records the click idempotently (first click wins, a repeat is a no-op; same semantics as
+  `digest.recordClick`), purely for the `digest_action_click_rate` metric, then answers 302
+  `${WEB_ORIGIN}${path}` where `path` starts with `/`, not `//`, and has no `\` or scheme (else
+  `/`). This is intentional: RFC 8058 and link-scanner safety are about not letting an automated
+  GET unsubscribe someone, not about GET never writing anything; a scanner recording a spurious
+  click has no user-facing or destructive effect and costs nothing to repeat. The API origin serves
+  `default-src 'none'`, so no HTML is ever rendered there.
 - Invalid or expired: GET -> 302 `${WEB_ORIGIN}/unsubscribe?error=invalid`, POST -> 400. The token
   never appears in logs. Per-IP rate limit: the `links` bucket, 60/min.
 - Versioning: `v` in the payload. A new payload shape gets `v: 2` and the verifier keeps accepting

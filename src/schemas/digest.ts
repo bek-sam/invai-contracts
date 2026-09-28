@@ -127,12 +127,24 @@ export type EmailSkipReason = z.infer<typeof EmailSkipReason>;
  * `unit`, and the formatted strings in both languages (money as currency, sizes unrounded). The AI
  * summary may only reference facts by id; code substitutes `formatted`.
  */
-export const DigestFact = z.object({
-  id: z.string().min(1).max(64),
-  unit: FactUnit,
-  value: z.union([z.number(), z.string(), z.null()]),
-  formatted: z.object({ en: z.string(), es: z.string() }),
-});
+export const DigestFact = z
+  .object({
+    id: z.string().min(1).max(64),
+    unit: FactUnit,
+    value: z.union([z.number(), z.string(), z.null()]),
+    formatted: z.object({ en: z.string(), es: z.string() }),
+  })
+  // A cents fact is money (integer USD cents), same rule as `Cents` in common.ts; catches a
+  // producer emitting a fraction (e.g. a rate instead of a whole-cent amount).
+  .superRefine((fact, ctx) => {
+    if (fact.unit === "cents" && typeof fact.value === "number" && !Number.isInteger(fact.value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "a cents fact's value must be an integer",
+        path: ["value"],
+      });
+    }
+  });
 export type DigestFact = z.infer<typeof DigestFact>;
 
 /** One glance-block row: this week, last week, and the change (a fact so it formats in en/es). */

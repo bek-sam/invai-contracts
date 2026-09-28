@@ -11,6 +11,7 @@ import { ALERT_KINDS } from "./schemas/alerts";
 import {
   DIGEST_STATUSES,
   Digest,
+  DigestFact,
   DigestFeedbackInput,
   DigestInsight,
   DigestRecipientEmailInput,
@@ -177,6 +178,19 @@ describe("digest schemas (card AC3)", () => {
     ).toBe(false);
     expect(DigestInsight.safeParse({ ...insight, impactCents: 120.5 }).success).toBe(false);
     expect(DigestInsight.safeParse({ ...insight, confidence: 80 }).success).toBe(false);
+    // A cents fact (not just impactCents) must also be a whole number.
+    expect(
+      DigestFact.safeParse(fact("net.thisWeek", "cents", 184250, "$1,842.50", "1.842,50 US$"))
+        .success,
+    ).toBe(true);
+    expect(
+      DigestFact.safeParse(fact("net.thisWeek", "cents", 184250.5, "$1,842.50", "1.842,50 US$"))
+        .success,
+    ).toBe(false);
+    // Non-cents units are unaffected by the integer rule.
+    expect(DigestFact.safeParse(fact("d6.rate", "pct", 15.2, "+15.2%", "+15,2 %")).success).toBe(
+      true,
+    );
   });
 
   it("insight detector is D1..D8 or market, with a fixed action kind and an in-app href", () => {
