@@ -145,6 +145,41 @@ export const FloorSession = z.object({
 });
 export type FloorSession = z.infer<typeof FloorSession>;
 
+/**
+ * Per-person email preferences keyed by kind (wave 19, A1). Every kind is opt-in: the default is
+ * off, and only the person can turn it on (`me.notifications.set`); an admin or an unsubscribe
+ * link can only turn it off. Values are appended at the end; the backend's `notify.ts` mirrors them.
+ */
+export const NOTIFICATION_KINDS = ["digest"] as const;
+export const NotificationKind = z.enum(NOTIFICATION_KINDS);
+export type NotificationKind = z.infer<typeof NotificationKind>;
+
+/** Who last changed the preference: the person in Settings/Account, a one-click unsubscribe link, or an admin. */
+export const NOTIFICATION_PREFERENCE_SOURCES = ["settings", "unsubscribe_link", "admin"] as const;
+export const NotificationPreferenceSource = z.enum(NOTIFICATION_PREFERENCE_SOURCES);
+export type NotificationPreferenceSource = z.infer<typeof NotificationPreferenceSource>;
+
+/** `source` and `updatedAt` are null while the preference was never set (default off). */
+export const NotificationPreference = z.object({
+  kind: NotificationKind,
+  on: z.boolean(),
+  source: NotificationPreferenceSource.nullable(),
+  updatedAt: Timestamp.nullable(),
+});
+export type NotificationPreference = z.infer<typeof NotificationPreference>;
+
+/** One row per kind in `NOTIFICATION_KINDS`, in that order, whether or not it was ever set. */
+export const NotificationPreferences = z.object({
+  items: z.array(NotificationPreference),
+});
+export type NotificationPreferences = z.infer<typeof NotificationPreferences>;
+
+export const NotificationPreferenceSetInput = z.object({
+  kind: NotificationKind,
+  on: z.boolean(),
+});
+export type NotificationPreferenceSetInput = z.infer<typeof NotificationPreferenceSetInput>;
+
 export const AUDIT_ACTIONS = [
   "auth.login",
   "auth.floor_login",

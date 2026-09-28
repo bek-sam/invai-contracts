@@ -12,6 +12,7 @@ export * from "./schemas/billing";
 export * from "./schemas/catalog";
 export * from "./schemas/channels";
 export * from "./schemas/common";
+export * from "./schemas/digest";
 export * from "./schemas/files";
 export * from "./schemas/finance";
 export * from "./schemas/inventory";

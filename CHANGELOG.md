@@ -1,5 +1,62 @@
 # Changelog
 
+## 0.7.0
+
+The weekly business review digest (T-19-1, wave 19, `specs/weekly-digest.md`, ADR 0014 fences,
+ADR 0016 link routes and preferences). Additive only; minor bump per the 0.x rule (new namespace,
+as 0.6.0). Not floor-facing: `FLOOR_COMPAT_BASELINE` stays at 0.3.0 (the floor never reads
+`digest.*`, `me.notifications.*` or `digest.ready`).
+
+- **Added** namespace `digest` (`src/contract/digest.ts`, tag `digest`, prefix `/digest`), nine
+  procedures, all `auth: user`. Implementer: backend-engineer (digest), T-19-3.
+  - `digest.list` (`GET /digest/`, `finance.read`): `Page` → `paginated(DigestSummary)`, newest first.
+  - `digest.get` (`GET /digest/week?weekKey`, `finance.read`): one week → `Digest`; `planUsage`
+    present only for `billing.read`. The week key is a query param because GET path params are
+    limited to ids (`contract.test.ts`).
+  - `digest.latest` (`GET /digest/latest`, `finance.read`) → `{ digest: DigestSummary | null, paused }`.
+  - `digest.feedback` (`POST /digest/{digestId}/feedback`, `finance.read`): idempotent on (digest,
+    insight, caller), latest vote wins; error `MARKET_INSIGHT` (409) for `detector: "market"`.
+  - `digest.recordClick` (`POST /digest/{digestId}/clicks`, `finance.read`): idempotent, first
+    click wins.
+  - `digest.settings.get` (`GET /digest/settings/`), `digest.settings.set` (`PATCH`, partial),
+    `digest.settings.setRecipientEmail` (`POST /digest/settings/recipients/{userId}/email`, `on`
+    is `false` by type): all `org.manage`.
+  - `digest.sendPreview` (`POST /digest/preview`, `org.manage`) → `DigestPreviewResult`; error
+    `NO_DIGEST` (409); rate limit is `RATE_LIMITED`.
+- **Added** `me.notifications.get` (`GET /me/notifications/`) and `me.notifications.set`
+  (`PUT /me/notifications/`), both `org.read`, keyed by `NOTIFICATION_KINDS = ["digest"]`.
+  Implementer: backend-foundation, T-19-4. `src/modules/tenancy/router.ts` must implement the
+  `notifications` key (`authed.me.router` requires every key).
+- **Added** `src/schemas/digest.ts`: `WEEK_KEY_PATTERN`/`WeekKey` (`YYYY-Www`), `DIGEST_STATUSES`
+  (`ready, skipped_quiet`; `building`/`failed` are DB-only), `NARRATIVE_STATUSES` (`none, shadow,
+  ok, rejected, skipped_budget, skipped_off`), `AI_SUMMARY_MODES`, `DIGEST_DETECTORS` (`D1..D8,
+  market`), `DIGEST_ACTION_KINDS`, `FACT_UNITS`, `GLANCE_METRICS`, `FEEDBACK_VOTES`,
+  `FEEDBACK_REASONS` (`not_relevant, wrong, already_knew`), `WEEKDAYS`, `RECIPIENT_DELIVERABILITY`,
+  `EMAIL_SKIP_REASONS`; schemas `DigestFact` (id, raw value, formatted en/es), `DigestGlanceItem`,
+  `DigestActionParams`, `DigestAction` (in-app `href` only), `DigestInsight` (reuses
+  `MarketRecommendation` for `detector: "market"`), `DigestPlanUsage`, `DigestSummary`, `Digest`
+  (≤ 3 actions, 1 win, ≤ 2 Market watch items; **no narrative text field**), `DigestLatest`,
+  `DigestFeedbackInput`/`DigestFeedback`, `DigestClickInput`/`DigestClick`, `DigestRecipient`,
+  `DigestSettings`/`DigestSettingsInput` (day `mon..sun`, hour 6..10), `DigestRecipientEmailInput`,
+  `DigestPreviewResult`.
+- **Added** to `src/schemas/tenancy.ts`: `NOTIFICATION_KINDS`, `NOTIFICATION_PREFERENCE_SOURCES`
+  (`settings, unsubscribe_link, admin`), `NotificationPreference`, `NotificationPreferences`,
+  `NotificationPreferenceSetInput`.
+- **Added** event `digest.ready` `{ digestId, weekKey }` to both `Events` and `RealtimeEvents`
+  (the envelope carries the org). Consumer file keyed on realtime names:
+  `invai-web/src/lib/realtime.ts` `keysForEvent` (T-19-5 adds the case; `default: []` until then).
+- **Added** `digest_narrative` at the end of `CREDIT_KINDS` (backend mirror
+  `invai-backend/src/db/schema/ai.ts`, T-19-2's grant).
+- **Added** `ai_summary_breaker` at the end of `ALERT_KINDS` (wave.md grant for T-19-2 AC22).
+  **Breaks** `invai-web/src/routes/_app/index.tsx` `alertKindLabel` (exhaustive switch over
+  `Alert["kind"]`, TS2366) until web-engineer adds the case and `alerts.kind.ai_summary_breaker`
+  in `src/i18n/en.ts` and `es.ts`. Same-day fix, tech lead to grant.
+- No new permission. Tests: `src/digest.test.ts` (matrix, routes, pagination, schema round-trips,
+  event, enum tails, version). `src/market.test.ts` now asserts "at least 0.6.1" instead of the
+  exact version, so the newest wave's test is the only one pinning `CONTRACT_VERSION`.
+- README: `digest` and `privacy` rows, `me.notifications` in the `me` row, digest permissions in
+  the permission model, and a "Public link routes (not oRPC)" section pinning `/l/:token`.
+
 ## 0.6.1
 
 Follow-up to T-18-1. Additive only; not floor-facing (`FLOOR_COMPAT_BASELINE` stays at 0.3.0).

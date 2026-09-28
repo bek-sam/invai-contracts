@@ -1,6 +1,6 @@
 {
   "name": "@invai/contracts",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Shared API contract, schemas, order states and event types for all InvAI repos",
   "type": "module",
   "exports": {

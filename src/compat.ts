@@ -5,7 +5,7 @@
  * backend refuses floor/station calls below its `MIN_FLOOR_CONTRACT_VERSION` with
  * `CLIENT_TOO_OLD` (426). `CONTRACT_VERSION` must equal `package.json` `version`; a test holds it.
  */
-export const CONTRACT_VERSION = "0.6.1";
+export const CONTRACT_VERSION = "0.7.0";
 
 /**
  * Oldest contracts version whose floor/station-facing shapes the backend still accepts: the

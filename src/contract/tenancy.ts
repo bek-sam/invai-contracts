@@ -9,6 +9,8 @@ import {
   Location,
   LocationInput,
   Me,
+  NotificationPreferenceSetInput,
+  NotificationPreferences,
   Org,
   ProductionPartner,
   StationDevice,
@@ -42,6 +44,23 @@ export const me = base
         }),
       )
       .output(Org),
+    /**
+     * The caller's own email preferences, keyed by kind (wave 19, A1). `org.read` because every
+     * signed-in member of any org holds it, and `none` stays reserved for the five bootstrap
+     * procedures. Implementer: backend-foundation, T-19-4.
+     */
+    notifications: base.prefix("/notifications").router({
+      /** One row per `NOTIFICATION_KINDS` entry, default off, never set = `source: null`. */
+      get: proc("org.read")
+        .route({ method: "GET", path: "/" })
+        .input(z.object({}))
+        .output(NotificationPreferences),
+      /** Turns one kind on or off for the caller, source `settings`. Idempotent; returns all rows. */
+      set: proc("org.read")
+        .route({ method: "PUT", path: "/" })
+        .input(NotificationPreferenceSetInput)
+        .output(NotificationPreferences),
+    }),
   });
 
 export const team = base

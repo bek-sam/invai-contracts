@@ -226,6 +226,9 @@ export const CREDIT_KINDS = [
   "assistant",
   "mockup",
   "market_niche",
+  // Wave 19 (T-19-1): the digest's AI summary, charged once per digest (ledger ref = the digest)
+  // even while it runs in shadow mode. The backend mirrors it in `src/db/schema/ai.ts` (T-19-2).
+  "digest_narrative",
 ] as const;
 
 export const CreditsBalance = z.object({

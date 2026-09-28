@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Id, Timestamp } from "./schemas/common";
+import { WeekKey } from "./schemas/digest";
 import {
   JOB_STATES,
   ORDER_ITEM_STATES,
@@ -88,6 +89,12 @@ export const RealtimeEvents = {
   "today.changed": z.object({ reason: z.string() }),
   /** Vendor portal: a shop sent a sheet. */
   "vendor.sheet_received": z.object({ sheetId: Id, shopName: z.string() }),
+  /**
+   * Wave 19: a digest for `weekKey` is `ready`; the web refreshes `digest.*` and the Today card
+   * (`invai-web/src/lib/realtime.ts` `keysForEvent`, T-19-5). Scoped to the caller's org by the
+   * SSE stream, so no company id in the payload. The floor never subscribes to it.
+   */
+  "digest.ready": z.object({ digestId: Id, weekKey: WeekKey }),
 } as const;
 
 export type RealtimeEventName = keyof typeof RealtimeEvents;

@@ -37,11 +37,11 @@ Rules:
 | `src/events.ts` | Outbox `Events` (name -> payload schema) for the worker |
 | `src/realtime.ts` | SSE `RealtimeEvents` for browsers and tablets, `REALTIME_SSE_PATH` |
 
-Namespaces (195 procedures):
+Namespaces (236 procedures):
 
 | Namespace | Domain file | Covers |
 | --- | --- | --- |
-| `me`, `team`, `locations`, `stations`, `floor`, `audit` | `tenancy` | current user + org, team management, PINs, station tokens, floor PIN login, audit log |
+| `me`, `team`, `locations`, `stations`, `floor`, `audit`, `demo` | `tenancy` | current user + org, per-person email preferences by kind (`me.notifications`), team management, PINs, station tokens, floor PIN login, audit log, sample workspace |
 | `today` | `today` | the command-center summary |
 | `alerts` | `alerts` | list, mark read |
 | `orders`, `orderItems` | `orders` | Order Hub list/filters, hold/release/cancel, timeline, counts, channel performance; per-unit items, manual map, artwork override, flags |
@@ -56,7 +56,9 @@ Namespaces (195 procedures):
 | `finance` | `finance` | profit by dimension, order profit breakdown, cost settings, ad spend |
 | `ai` | `ai` | listing drafts, validation, trademark check, streamed assistant, credits |
 | `market` | `market` | niche taxonomy, a design's niches (get/shop-correct), demand/price recommendations for the assistant (list/vote) |
+| `digest` | `digest` | weekly business review: past weeks, one week, latest for the Today card, thumbs and clicks per insight, shop settings + recipients, preview email |
 | `billing` | `billing` | plan, usage vs limits, change plan (Stripe stubbed) |
+| `privacy` | `privacy` | whole-company export and deletion request (B-23) |
 
 ## How to add a procedure
 
@@ -109,3 +111,35 @@ Namespaces (195 procedures):
     the staff member who owns the PIN; the session carries that user's role and permissions.
 - Vendor users only reach `vendorPortal.*`, `me.*`, `team.*`, `files.downloadUrl` and
   `alerts.*`; the backend additionally scopes sheet reads through `vendor_access`.
+- Recipients of the weekly digest are chosen by permission, not role: `digest.list/get/latest/
+  feedback/recordClick` need `finance.read` (owner, admin, office); `digest.settings.*` and
+  `digest.sendPreview` need `org.manage` (owner, admin); `Digest.planUsage` is filled only for
+  callers with `billing.read` (owner, admin). `me.notifications.*` is `org.read` (any member).
+  `src/digest.test.ts` holds the matrix.
+
+## Public link routes (not oRPC)
+
+Email links must work without a session and survive link scanners, so they are plain HTTP routes
+on the API origin, outside this contract (wave 19, A9; built in `invai-backend/src/api/links.ts`,
+T-19-4; consumed by the web unsubscribe page, T-19-5). Their shape is pinned here so both sides
+build to the same thing:
+
+- URL: `${BETTER_AUTH_URL}/l/:token`. The token is `signPayload` with a purpose-bound key
+  (`hmacHex(BETTER_AUTH_SECRET, "links:v1")`, no new env), payload
+  `{ v: 1, k: "unsubscribe" | "click", c: companyId, u: userId, r: ref (<= 128 chars), exp }`.
+  Unsubscribe tokens live 400 days, click tokens 30 days. Verification binds `c` + `u` to an
+  active membership before anything happens; a token edited to another shop or person is rejected.
+- `POST /l/:token` (`k: unsubscribe` only; `click` -> 405): RFC 8058 one-click unsubscribe. Accepts
+  the `List-Unsubscribe=One-Click` form body or an empty body, sets the person's `digest`
+  preference off with source `unsubscribe_link`, and answers 200 on a repeat (idempotent). Undo:
+  `POST` JSON `{ "undo": true }` on the same token, allowed only within 24 h of that unsubscribe
+  (else 409; the page says to sign in). This is what the web's Undo button calls.
+- `GET /l/:token`: never mutates. `unsubscribe` -> 302 `${WEB_ORIGIN}/unsubscribe?token=...` (the
+  web renders the confirm page and POSTs); `click` -> the registered handler records the click and
+  answers 302 `${WEB_ORIGIN}${path}` where `path` starts with `/`, not `//`, and has no `\` or
+  scheme (else `/`). The API origin serves `default-src 'none'`, so no HTML is ever rendered there.
+- Invalid or expired: GET -> 302 `${WEB_ORIGIN}/unsubscribe?error=invalid`, POST -> 400. The token
+  never appears in logs. Per-IP rate limit: the `links` bucket, 60/min.
+- Versioning: `v` in the payload. A new payload shape gets `v: 2` and the verifier keeps accepting
+  `v: 1` until every token that could still be in an inbox has expired (400 days for unsubscribe).
+  Nothing here is partner-facing; the recipients are the shop's own members.

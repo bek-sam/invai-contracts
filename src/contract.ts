@@ -5,6 +5,7 @@ import { alerts } from "./contract/alerts";
 import { billing } from "./contract/billing";
 import { blanks, designs, products } from "./contract/catalog";
 import { channels, skuRules } from "./contract/channels";
+import { digest } from "./contract/digest";
 import { files } from "./contract/files";
 import { finance } from "./contract/finance";
 import { inventory } from "./contract/inventory";
@@ -59,6 +60,8 @@ export const contract = {
   ai,
   // market signals: niche taxonomy, design niches, recommendation feed and votes (wave 18)
   market,
+  // weekly business review: digests, insight feedback and clicks, shop settings, preview (wave 19)
+  digest,
   billing,
   // whole-company export and deletion (B-23)
   privacy,

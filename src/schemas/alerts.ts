@@ -20,6 +20,7 @@ export const ALERT_KINDS = [
   "queue_failed_spike", // a background queue's failed jobs grew past a threshold in 15 min ("critical")
   "outbox_parked", // an outbox event gave up after its retry budget and needs a redrive ("critical")
   "ai_breaker_fail_open", // the AI spend check could not reach Valkey and let a call through ("critical")
+  "ai_summary_breaker", // wave 19: > 10% of digest AI summaries rejected in 24 h, global mode flipped to shadow ("critical")
 ] as const;
 
 export const Alert = z.object({

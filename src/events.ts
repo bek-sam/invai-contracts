@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Id, Timestamp } from "./schemas/common";
+import { WeekKey } from "./schemas/digest";
 import { ORDER_ITEM_STATES, SHEET_STATES, SHIPMENT_STATES, STATIONS } from "./states";
 
 const ItemState = z.enum(ORDER_ITEM_STATES);
@@ -147,6 +148,9 @@ export const Events = {
   }),
   // alerts
   "alert.created": z.object({ alertId: Id, kind: z.string(), severity: z.string() }),
+  // digest (wave 19): published when a digest is stored `ready`; the delivery job and the Today
+  // card hang off it. The envelope's `orgId` carries the company, as for every other event.
+  "digest.ready": z.object({ digestId: Id, weekKey: WeekKey }),
 } as const;
 
 export type EventName = keyof typeof Events;

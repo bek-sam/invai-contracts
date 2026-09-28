@@ -1,7 +1,7 @@
 import { isContractProcedure } from "@orpc/contract";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE } from "./compat";
+import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE, isContractVersionAtLeast } from "./compat";
 import { contract, listProcedures, PROCEDURE_PERMISSIONS } from "./contract";
 import { hasPermission, type Permission, ROLES } from "./roles";
 import { AssistantEvent, AssistantMessage } from "./schemas/ai";
@@ -360,8 +360,9 @@ describe("assistant event additions are additive (card AC1)", () => {
 });
 
 describe("version", () => {
-  it("is 0.6.1 and the floor baseline is untouched (nothing here is floor-facing, ADR 0012)", () => {
-    expect(CONTRACT_VERSION).toBe("0.6.1");
+  it("is at least 0.6.1 and the floor baseline is untouched (nothing here is floor-facing, ADR 0012)", () => {
+    // The exact current version is asserted once, in the newest wave's test (digest.test.ts).
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.6.1")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });
