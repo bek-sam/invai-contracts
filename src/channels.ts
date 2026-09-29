@@ -161,12 +161,18 @@ export const CHANNEL_RULES: Record<Channel, ChannelRules> = {
       requiresAiDisclosure: false,
     },
     fees: {
-      transactionPct: 8,
+      // B-164: 6% referral for every menswear, womenswear and kids' fashion subcategory; the
+      // referral fee covers every TikTok Shop fee except shipping and tax. Source: TikTok Shop US
+      // Seller University, "Referral fees", knowledge_id=5988482086864682
+      // (https://seller-us.tiktok.com/university/essay?knowledge_id=5988482086864682), page
+      // updated 2026-05-14, fetched 2026-09-28 (T-22-1; first verified in T-7-2, 2026-09-25).
+      // The earlier 8 was "referral ~6% + 2% transaction"; the 2% no longer applies.
+      transactionPct: 6,
       perOrderCents: 0,
       paymentPct: 0,
       paymentFixedCents: 0,
       listingFeeCents: 0,
-      note: "~8% (referral ~6% + 2% transaction, US 2026); verify against the seller agreement",
+      note: "6% referral on apparel (US, page updated 2026-05-14), covers all TikTok Shop fees but shipping and tax",
     },
     shipBy: {
       source: "handling_days",
