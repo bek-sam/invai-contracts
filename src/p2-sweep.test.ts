@@ -18,6 +18,7 @@ import {
   MaintenanceStartResult,
   MISMATCH_REASONS,
   QueueItem,
+  REPRINT_REASONS,
   ScanResult,
   StationMaintenance,
 } from "./schemas/production";
@@ -213,6 +214,12 @@ describe("production schemas (B-35, B-32)", () => {
     expect(blocked.transferAgeWarning).toBe(true);
     const errors = Object.keys(contract.production.scan["~orpc"].errorMap ?? {});
     expect(errors.some((e) => /MAINTENANCE/i.test(e))).toBe(false);
+  });
+
+  it("under_cure and cracking are appended to the reprint reasons (peeling maps to peel)", () => {
+    expect(REPRINT_REASONS.slice(-2)).toEqual(["under_cure", "cracking"]);
+    expect(REPRINT_REASONS).toContain("peel");
+    expect(new Set(REPRINT_REASONS).size).toBe(REPRINT_REASONS.length);
   });
 
   it("QueueItem accepts the blank location and transfer age, and still parses without them", () => {

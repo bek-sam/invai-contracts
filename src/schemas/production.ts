@@ -306,6 +306,17 @@ export const REPRINT_REASONS = [
   "customer_request",
   "lost",
   "other",
+  /**
+   * QC fail reasons from research 10 §DTF (B-35, T-22-4), so defects trace back to curing and
+   * pressing: `under_cure` (film lifts at the edge after pressing) and `cracking` (the print
+   * cracks when stretched). `peeling` from the research maps to the existing `peel`. Appended
+   * last; consumers keyed on this enum: `invai-backend/src/db/schema/production.ts`
+   * `REPRINT_REASONS` (type mirror, `floor.ts` typecheck), `invai-floor/src/i18n/{en,es}.ts`
+   * `floor.reason.*` (`ProblemDialog` shows every value), `invai-web/src/i18n/{en,es}.ts`
+   * `reprintReason.*`.
+   */
+  "under_cure",
+  "cracking",
 ] as const;
 
 export const QcInput = z.object({
