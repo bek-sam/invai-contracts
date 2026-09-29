@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CHANNELS, SHIPMENT_STATES } from "../states";
-import { Address, Cents, Id, Timestamp } from "./common";
+import { Address, Cents, DateOnly, Id, Timestamp } from "./common";
 
 /** `mock` is the sandbox carrier used when no EasyPost key is present. */
 export const CARRIERS = ["usps", "ups", "mock"] as const;
@@ -81,8 +81,66 @@ export const Rate = z.object({
   /** Cheapest / fastest markers for the UI. */
   cheapest: z.boolean(),
   fastest: z.boolean(),
+  /**
+   * Rate TTL (B-25, T-22-3). Carriers reprice; a `buy` after this instant re-rates first and
+   * answers `RATE_EXPIRED` when the price moved, never a silent charge at a new price. Optional
+   * so a backend that doesn't compute it yet still typechecks; absent means "unknown", which the
+   * client treats as still valid (the server is the judge either way).
+   */
+  expiresAt: Timestamp.optional(),
 });
 export type Rate = z.infer<typeof Rate>;
+
+/** Carriers that manifest end-of-day pickups with a SCAN form. UPS uses its own pickup flow. */
+export const SCAN_FORM_CARRIERS = ["usps", "mock"] as const;
+
+/**
+ * A USPS SCAN form (B-25, T-22-3): one barcode the carrier scans at pickup that accepts every
+ * label on it at once, so tracking shows "accepted" the same day. One form per carrier + date
+ * per shop (`create` is idempotent on that key and returns the existing form); labels already on
+ * a form are never added to a second one.
+ */
+export const ScanForm = z.object({
+  id: Id,
+  carrier: z.enum(SCAN_FORM_CARRIERS),
+  /** The pickup day in the shop's timezone. */
+  date: DateOnly,
+  /** Labels manifested on this form. */
+  labelCount: z.number().int().nonnegative(),
+  shipmentIds: z.array(Id),
+  /** Carrier-side id (EasyPost `sf_...`), null for the mock carrier. */
+  carrierFormId: z.string().nullable(),
+  /** S3 key of the form PDF; sign it through `files.downloadUrl`. Null when the carrier returned none. */
+  fileKey: z.string().nullable(),
+  createdAt: Timestamp,
+});
+export type ScanForm = z.infer<typeof ScanForm>;
+
+export const ScanFormCreateInput = z.object({
+  carrier: z.enum(SCAN_FORM_CARRIERS),
+  /** Defaults to today in the shop's timezone. */
+  date: DateOnly.optional(),
+});
+export type ScanFormCreateInput = z.infer<typeof ScanFormCreateInput>;
+
+export const ADDRESS_VERIFICATION_STATUSES = ["verified", "corrected", "failed"] as const;
+
+/**
+ * Result of a carrier address check on an order's ship-to (B-25, T-22-3). `corrected` carries the
+ * carrier's standardized address in `suggestion`; `failed` puts the order on the existing
+ * `address_check` hold (`HOLD_REASONS`). The suggestion is buyer PII: shown to the caller, never
+ * logged. Deterministic by fixture on the mock carrier.
+ */
+export const AddressVerification = z.object({
+  orderId: Id,
+  status: z.enum(ADDRESS_VERIFICATION_STATUSES),
+  /** The carrier's corrected address when `status` is `corrected`; null otherwise. */
+  suggestion: Address.nullable(),
+  /** Carrier detail for `failed` (e.g. "Address not found"), never the address itself. */
+  detail: z.string().nullable(),
+  verifiedAt: Timestamp,
+});
+export type AddressVerification = z.infer<typeof AddressVerification>;
 
 export const RatesInput = z.object({
   orderId: Id,

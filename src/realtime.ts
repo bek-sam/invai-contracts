@@ -57,6 +57,12 @@ export const RealtimeEvents = {
   }),
   "queue.changed": z.object({ station: z.enum(STATIONS), waiting: z.number().int() }),
   "bin.changed": z.object({ code: z.string(), orderId: Id.nullable() }),
+  /**
+   * B-35: a station's maintenance window opened or closed. Web refreshes the stations screen
+   * (`invai-web/src/lib/realtime.ts` `keysForEvent` needs a case; `default: []` until then).
+   * Tablets poll `production.maintenance.list` instead; the floor never subscribes to SSE.
+   */
+  "station.maintenance_changed": z.object({ stationId: Id, open: z.boolean() }),
   "shipment.updated": z.object({ shipmentId: Id, orderId: Id, status: z.enum(SHIPMENT_STATES) }),
   "stock.low": z.object({
     blankVariantId: Id,

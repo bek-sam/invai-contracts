@@ -8,7 +8,13 @@ export const ListingContent = z.object({
   description: z.string(),
   tags: z.array(z.string()),
   bullets: z.array(z.string()),
-  /** Channel attributes (Amazon item type, Etsy category, materials...). */
+  /**
+   * Channel attributes (Amazon item type, Etsy category, materials...), keyed by attribute name.
+   * This map is the one shape at the API and in `listing_drafts.content` (ADR 0017, B-167). The
+   * model's structured output uses a `{ key, value }[]` list (`ListingCopy` in the backend) only
+   * because a JSON schema can't describe open keys; the backend folds it into this map at the
+   * AI boundary and nowhere else. Duplicate keys: first wins.
+   */
   attributes: z.record(z.string(), z.string()),
   price: Cents.nullable(),
   /** Added automatically: AI-use and production-partner disclosures required by the channel. */

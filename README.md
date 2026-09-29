@@ -37,7 +37,7 @@ Rules:
 | `src/events.ts` | Outbox `Events` (name -> payload schema) for the worker |
 | `src/realtime.ts` | SSE `RealtimeEvents` for browsers and tablets, `REALTIME_SSE_PATH` |
 
-Namespaces (236 procedures):
+Namespaces (244 procedures):
 
 | Namespace | Domain file | Covers |
 | --- | --- | --- |
@@ -49,10 +49,10 @@ Namespaces (236 procedures):
 | `designs`, `blanks`, `products` | `catalog` | designs with placements and QA, blank variants + bulk import, products (design x blank style) |
 | `files` | `files` | presigned upload, signed download |
 | `personalization` | `personalization` | templates CRUD + preview, item artwork list/approve/edit/re-render |
-| `production` | `production` | batch preview/build, jobs, sheets, station queue, scan, QC, reprints, bins |
-| `vendors`, `vendorPortal` | `vendors` | shop-side vendor connections and sheet spec; vendor-side inbox and status updates |
+| `production` | `production` | batch preview/build, jobs, sheets, station queue (with blank shelf/bin and transfer age), scan, QC, reprints, bins, station maintenance windows (`production.maintenance`) |
+| `vendors`, `vendorPortal` | `vendors` | shop-side vendor connections and sheet spec, resend a sheet email (`vendors.sheets.resendEmail`); vendor-side inbox and status updates |
 | `inventory` | `inventory` | stock levels, movement ledger, adjust, count, reorder suggestions, purchase orders, suppliers, settings |
-| `shipping` | `shipping` | ship queue, rates, buy, batch buy, batch label PDF, void, shipments, settings, tracking push |
+| `shipping` | `shipping` | ship queue, rates (with `expiresAt`), buy, batch buy, batch label PDF, void, shipments, settings, tracking push, USPS SCAN forms (`shipping.scanForms`), address check (`shipping.verifyAddress`) |
 | `finance` | `finance` | profit by dimension, order profit breakdown, cost settings, ad spend |
 | `ai` | `ai` | listing drafts, validation, trademark check, streamed assistant, credits |
 | `market` | `market` | niche taxonomy, a design's niches (get/shop-correct), demand/price recommendations for the assistant (list/vote) |
@@ -116,6 +116,12 @@ Namespaces (236 procedures):
   `digest.sendPreview` need `org.manage` (owner, admin); `Digest.planUsage` is filled only for
   callers with `billing.read` (owner, admin). `me.notifications.*` is `org.read` (any member).
   `src/digest.test.ts` holds the matrix.
+- Wave 22 (P2 sweep, `src/p2-sweep.test.ts`): `shipping.scanForms.create` and
+  `shipping.verifyAddress` need `shipping.manage` (owner, admin, office; packers hold only
+  `shipping.buy`). `production.maintenance.start/end` need `production.maintenance` (owner,
+  admin, office): a lead closes a press, presser and packer can't, and `stations.manage` stays
+  owner/admin only because it issues station tokens. `production.maintenance.list` is
+  `production.read` with `auth: floor`. `vendors.sheets.resendEmail` is `vendors.manage`.
 
 ## Public link routes (not oRPC)
 

@@ -8,6 +8,10 @@ import {
   GangSheet,
   GangSheetDetail,
   Job,
+  MaintenanceEndInput,
+  MaintenanceEndResult,
+  MaintenanceStartInput,
+  MaintenanceStartResult,
   PackOrderInput,
   PackOrderResult,
   QcInput,
@@ -16,6 +20,7 @@ import {
   ScanInput,
   ScanResult,
   SheetDownloadUrls,
+  StationMaintenance,
   StationQueue,
 } from "../schemas/production";
 import { ORDER_ITEM_STATES, SHEET_STATES, STATIONS } from "../states";
@@ -215,6 +220,37 @@ const bins = base.prefix("/bins").router({
     .output(Bin),
 });
 
+/**
+ * Station maintenance windows (B-35, T-22-4, implementer: backend-engineer production).
+ * `start`/`end` are `production.maintenance` (owner, admin, office): closing a press is a
+ * lead's call; presser and packer hold the same floor permissions, so nothing narrower would
+ * refuse one and allow the other, and `stations.manage` (tokens) is owner/admin only. `list` is
+ * `production.read` with `auth: floor` so a tablet can show which stations are closed. Both
+ * writes are idempotent (see the result schemas) and audited.
+ */
+const maintenance = base.prefix("/maintenance").router({
+  start: proc("production.maintenance")
+    .route({ method: "POST", path: "/start" })
+    .input(MaintenanceStartInput)
+    .output(MaintenanceStartResult),
+  end: proc("production.maintenance")
+    .route({ method: "POST", path: "/end" })
+    .input(MaintenanceEndInput)
+    .output(MaintenanceEndResult),
+  list: proc("production.read", { auth: "floor" })
+    .route({ method: "GET", path: "/" })
+    .input(
+      Page.extend({
+        stationId: Id.optional(),
+        /** Only windows still open (`endedAt` null). */
+        open: z.boolean().optional(),
+        from: Timestamp.optional(),
+        to: Timestamp.optional(),
+      }),
+    )
+    .output(paginated(StationMaintenance)),
+});
+
 export const production = base
   .prefix("/production")
   .tag("production")
@@ -224,6 +260,7 @@ export const production = base
     sheets,
     reprints,
     bins,
+    maintenance,
     /** What's next at a station, ordered by rush then ship-by. Pick shows `transfer_in`, press `transfer_in`
      * with a picked blank, QC `pressed`, pack `pressed` (QC passed) grouped by order. */
     queue: proc("production.read", { auth: "floor" })

@@ -1,10 +1,14 @@
 import { z } from "zod";
-import { Id, Page, paginated, Timestamp } from "../schemas/common";
+import { DateOnly, Id, Page, paginated, Timestamp } from "../schemas/common";
 import {
+  AddressVerification,
   BATCH_STRATEGIES,
   BatchBuyResult,
   RatesInput,
   RatesResult,
+  SCAN_FORM_CARRIERS,
+  ScanForm,
+  ScanFormCreateInput,
   Shipment,
   ShippingSettings,
   ShippingSettingsInput,
@@ -61,6 +65,47 @@ const trackingPush = base.prefix("/tracking-push").router({
     .output(TrackingPushStatus),
 });
 
+/**
+ * USPS end-of-day SCAN forms (B-25, T-22-3, implementer: integrations-engineer by grant into
+ * the shipping module). `create` is `shipping.manage` (owner, admin, office): manifesting the
+ * day's pickup is an office action, and packers (who hold `shipping.buy`) must be refused.
+ */
+const scanForms = base.prefix("/scan-forms").router({
+  /**
+   * Manifest every label bought for `carrier` on `date` that isn't on a form yet. Idempotent on
+   * (carrier, date): a second call returns the existing form unchanged, never a second one.
+   */
+  create: proc("shipping.manage")
+    .route({ method: "POST", path: "/" })
+    .input(ScanFormCreateInput)
+    .output(ScanForm)
+    .errors({
+      NO_LABELS_TO_MANIFEST: {
+        status: 409,
+        message: "No labels for this carrier and day are waiting for a SCAN form",
+      },
+      SCAN_FORM_REJECTED: {
+        status: 502,
+        message: "Carrier refused the SCAN form",
+        data: z.object({ detail: z.string() }),
+      },
+    }),
+  list: proc("shipping.read")
+    .route({ method: "GET", path: "/" })
+    .input(
+      Page.extend({
+        carrier: z.enum(SCAN_FORM_CARRIERS).optional(),
+        from: DateOnly.optional(),
+        to: DateOnly.optional(),
+      }),
+    )
+    .output(paginated(ScanForm)),
+  get: proc("shipping.read")
+    .route({ method: "GET", path: "/{id}" })
+    .input(z.object({ id: Id }))
+    .output(ScanForm),
+});
+
 export const shipping = base
   .prefix("/shipping")
   .tag("shipping")
@@ -68,6 +113,20 @@ export const shipping = base
     shipments,
     settings,
     trackingPush,
+    scanForms,
+    /**
+     * Carrier address check on an order's ship-to (B-25, T-22-3). `shipping.manage` because the
+     * check is a carrier call made from the shipping side and its holders (owner, admin, office)
+     * are the people who fix addresses; `failed` puts the order on the `address_check` hold as
+     * a side effect. Returns the stored result for a repeat call while the ship-to is unchanged.
+     */
+    verifyAddress: proc("shipping.manage")
+      .route({ method: "POST", path: "/verify-address" })
+      .input(z.object({ orderId: Id }))
+      .output(AddressVerification)
+      .errors({
+        NO_SHIP_TO: { status: 409, message: "This order has no ship-to address" },
+      }),
     /** Orders fully packed and not yet labeled, in ship-by order. */
     queue: proc("shipping.read", { auth: "floor" })
       .route({ method: "GET", path: "/queue" })

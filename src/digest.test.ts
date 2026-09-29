@@ -1,7 +1,7 @@
 import { isContractProcedure } from "@orpc/contract";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE } from "./compat";
+import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE, isContractVersionAtLeast } from "./compat";
 import { contract, listProcedures, PROCEDURE_PERMISSIONS } from "./contract";
 import { Events } from "./events";
 import { parseRealtimeEvent, RealtimeEvents } from "./realtime";
@@ -356,8 +356,9 @@ describe("digest.ready event (card AC5) and appended enum values", () => {
 });
 
 describe("version", () => {
-  it("is 0.7.0 (new namespace, minor bump) and the floor baseline is untouched (ADR 0012)", () => {
-    expect(CONTRACT_VERSION).toBe("0.7.0");
+  it("is at least 0.7.0 (new namespace, minor bump) and the floor baseline is untouched (ADR 0012)", () => {
+    // The newest wave's test pins the exact version (src/p2-sweep.test.ts), so a bump touches one file.
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.7.0")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

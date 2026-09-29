@@ -1,5 +1,84 @@
 # Changelog
 
+## 0.8.0
+
+Contract additions for the P2 sweep (T-22-1, wave 22: B-25, B-32, B-35, B-102, B-162, B-164,
+B-167). Additive only; minor bump per the 0.x rule. Floor-facing shapes (`QueueItem`,
+`ScanResult`, `MISMATCH_REASONS`, `REPRINT_REASONS`) only gain optional fields and appended
+values, so `FLOOR_COMPAT_BASELINE` stays at 0.3.0 (ADR 0012 §5, additive needs no window).
+
+The release lands in three commits so each consumer's mirror can go first and every consumer's
+typecheck and tests stay green at the wave 20 gate: (1) everything below except the two items
+marked *gated*; (2) `REPRINT_REASONS` values, pushed with T-22-4's backend mirror; (3) the
+TikTok fee value, pushed with T-22-5's `fees.test.ts` line. Same version for all three: none
+of the gated items changes a floor-facing shape.
+
+- **Added** `shipping.scanForms.create` (`POST /shipping/scan-forms/`, `shipping.manage`) →
+  `ScanForm`, idempotent on (carrier, date); errors `NO_LABELS_TO_MANIFEST` (409),
+  `SCAN_FORM_REJECTED` (502). `shipping.scanForms.list` (`GET`, `Page` + carrier/from/to) and
+  `shipping.scanForms.get` (`GET /{id}`), both `shipping.read`. Implementer:
+  integrations-engineer by grant into the shipping module (T-22-3).
+- **Added** `shipping.verifyAddress` (`POST /shipping/verify-address`, `shipping.manage`):
+  `{ orderId }` → `AddressVerification { status: verified|corrected|failed, suggestion, detail,
+  verifiedAt }`; error `NO_SHIP_TO` (409). `failed` uses the existing `address_check` hold.
+  Implementer: T-22-3.
+- **Added** `Rate.expiresAt?: Timestamp` (rate TTL). Optional: a backend that doesn't compute it
+  still typechecks; `shipping.buy` already has `RATE_EXPIRED`.
+- **Added** `src/schemas/shipping.ts`: `SCAN_FORM_CARRIERS` (`usps, mock`), `ScanForm`,
+  `ScanFormCreateInput`, `ADDRESS_VERIFICATION_STATUSES`, `AddressVerification`.
+- **Added** `production.maintenance.start` / `.end` (`POST /production/maintenance/{start,end}`,
+  new permission `production.maintenance`: owner, admin, office) and
+  `production.maintenance.list` (`GET`, `production.read`, `auth: floor`, paginated). Start and
+  end are idempotent by result shape (`MaintenanceStartResult.started`,
+  `MaintenanceEndResult.ended`), never by error. Backed by a production-owned
+  `station_maintenance_events` table (architect A3). Implementer: backend-engineer production
+  (T-22-4).
+- **Added** permission `production.maintenance` to `PERMISSIONS` and `OFFICE` (owner/admin via
+  `SHOP_ALL`). `stations.manage` was the natural reuse but is owner/admin only (it issues station
+  tokens), and the office lead must be able to close a press.
+- **Added** `station_maintenance` at the end of `MISMATCH_REASONS`: a scan at a closed station
+  is `ok: false`, `nextAction: "press"`, never a thrown error (architect A4). Consumers keyed on
+  the enum (no typecheck break, label fallback until added): `invai-floor/src/i18n/{en,es}.ts`
+  `floor.mismatch.station_maintenance`; `invai-web/src/routes/_app/production/stations.tsx`
+  `mismatch.station_maintenance` (en/es).
+- **Added** `src/schemas/production.ts`: `MAINTENANCE_REASONS` (`cleaning, calibration, repair,
+  printer_maintenance, other`), `StationMaintenance`, `MaintenanceStartInput`,
+  `MaintenanceStartResult`, `MaintenanceEndInput`, `MaintenanceEndResult`.
+- **Added** to `QueueItem`: `blank.shelf?`, `blank.binCode?` (the blank's location, B-32; nested
+  because `QueueItem.binCode` is the pack tote), `transferPrintedAt?`, `transferAgeDays?`,
+  `transferAgeWarning?` (B-35). To `ScanResult`: `expected.shelf?`, `expected.binCode?`,
+  `transferAgeDays?`, `transferAgeWarning?`. All optional until T-22-4 fills them.
+- **Added** *gated (commit 2, with T-22-4)*: `under_cure` and `cracking` at the end of
+  `REPRINT_REASONS` (research 10 §DTF; `peeling` maps to the existing `peel`). Breaks
+  `invai-backend/src/modules/production/floor.ts` typecheck until the backend mirror
+  `src/db/schema/production.ts` `REPRINT_REASONS` gains both values (type-only `enumText`, no
+  migration). Labels: `invai-floor/src/i18n/{en,es}.ts` `floor.reason.*` (`ProblemDialog` lists
+  every value), `invai-web/src/i18n/{en,es}.ts` `reprintReason.*`.
+- **Added** `vendors.sheets.resendEmail` (`POST /vendors/sheets/{sheetId}/resend-email`,
+  `vendors.manage`) → `{ sheetId, sentAt }`; errors `SHEET_NOT_SENT` (409),
+  `VENDOR_USES_PORTAL` (409), `RESEND_TOO_SOON` (429, `{ retryAfterSec, lastSentAt }`; the
+  backend sets the window, T-22-5 uses 10 minutes). Implementer: backend-engineer vendors (T-22-5).
+- **Added** `me.updateOrg` input `shipsSaturday?` and `transferAgeWarnDays?` (1..365) and the
+  same as optional fields on `Org`. `printsInHouse` was already settable there (B-162: only
+  `shipsSaturday` was API-only). Implementer: backend-foundation (tenancy module, `updateOrg`
+  service patch and `Org` mapping); no wave-22 card owns it, see the report.
+- **Added** event `station.maintenance_changed` to `Events` (`{ stationId, maintenanceId, open,
+  reason }`) and `RealtimeEvents` (`{ stationId, open }`). Web: `invai-web/src/lib/realtime.ts`
+  `keysForEvent` needs a case (`default: []` until then). The floor never subscribes.
+- **Changed** *gated (commit 3, with T-22-5)*: `CHANNEL_RULES.tiktok.fees.transactionPct` 8 → 6
+  (B-164). Source: TikTok Shop US seller university, "Referral fees", knowledge_id
+  5988482086864682, page updated 2026-05-14, fetched 2026-09-28: 6% for every menswear,
+  womenswear and kids' fashion subcategory. Breaks `invai-backend/src/modules/finance/fees.test.ts`
+  (asserts the stale 8) until T-22-5 updates it; `usesSchedule()` keeps working because a
+  fresh `defaultFeeTable("tiktok")` equals the new default. Existing cost-settings rows seeded
+  at 8 no longer match the default and fall to a flat 8% (T-22-5 to backfill).
+- **Decided** ADR 0017 (B-167): `ListingContent.attributes` stays `Record<string, string>` at the
+  API and in `listing_drafts.content`; the model's `{ key, value }[]` is the AI transport only,
+  folded once in `ai/service.ts` `toContent`. No DB default migration needed. Doc comment added.
+- Tests: `src/p2-sweep.test.ts` (routes, permissions, role matrix, schema round-trips, enum
+  tails, events, version pin). `src/digest.test.ts` now asserts "at least 0.7.0".
+- README: namespace rows, 244 procedures, permission-model paragraph.
+
 ## 0.7.0
 
 The weekly business review digest (T-19-1, wave 19, `specs/weekly-digest.md`, ADR 0014 fences,

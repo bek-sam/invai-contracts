@@ -67,6 +67,10 @@ export const PERMISSIONS = [
   "production.qc", // QC pass/fail, reprint requests
   "production.override", // hand a short order to a lead when units are missing
   "production.receive", // mark vendor sheets / blank POs received on the floor
+  // Close a station for maintenance and reopen it (B-35, wave 22). Its own permission because
+  // `stations.manage` (create stations, issue tokens) is owner/admin only, while the office lead
+  // must be able to close a press, and presser/packer must not.
+  "production.maintenance",
   // vendors (shop side) and vendor portal (vendor side)
   "vendors.read",
   "vendors.manage",
@@ -132,6 +136,7 @@ const OFFICE: Permission[] = [
   "production.build",
   "production.qc",
   "production.receive",
+  "production.maintenance",
   "vendors.read",
   "vendors.manage",
   "inventory.read",

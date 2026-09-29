@@ -41,6 +41,10 @@ export const me = base
           timezone: z.string().optional(),
           printsInHouse: z.boolean().optional(),
           productionPartner: ProductionPartner.nullable().optional(),
+          /** B-162: settable here (stored in `companies.settings`), read by ship-by math. */
+          shipsSaturday: z.boolean().optional(),
+          /** B-35: days after printing at which a transfer gets the age warning (default 30). */
+          transferAgeWarnDays: z.number().int().min(1).max(365).optional(),
         }),
       )
       .output(Org),

@@ -82,6 +82,13 @@ export const Events = {
   "item.qc_failed": z.object({ orderItemId: Id, reprintId: Id, reason: z.string() }),
   "item.packed": z.object({ orderItemId: Id, orderId: Id, orderComplete: z.boolean() }),
   "reprint.requested": z.object({ reprintId: Id, orderItemId: Id, reason: z.string() }),
+  /** A station maintenance window opened (`open: true`) or closed (B-35, T-22-4); capacity and Today can subscribe. */
+  "station.maintenance_changed": z.object({
+    stationId: Id,
+    maintenanceId: Id,
+    open: z.boolean(),
+    reason: z.string(),
+  }),
   // vendors
   "sheet.acknowledged": z.object({ sheetId: Id, vendorOrgId: Id }),
   "sheet.printed": z.object({ sheetId: Id, vendorOrgId: Id }),

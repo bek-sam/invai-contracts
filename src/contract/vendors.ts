@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, Ok, Page, paginated } from "../schemas/common";
+import { Id, Ok, Page, paginated, Timestamp } from "../schemas/common";
 import { SheetDownloadUrls } from "../schemas/production";
 import {
   SheetSpec,
@@ -61,6 +61,35 @@ export const vendors = base
           data: z.object({ sheetsOpen: z.number() }),
         },
       }),
+    /** Shop-side actions on a sheet already sent to a vendor (B-102, T-22-5, implementer: backend-engineer vendors). */
+    sheets: base.prefix("/sheets").router({
+      /**
+       * Send the "sheet ready" email again for an email-delivery vendor (a lost or bounced
+       * message). The first send happens in a job after the sending transaction commits, once
+       * per sheet; a resend is a deliberate second send, rate-limited per sheet (the backend sets
+       * the window; T-22-5 uses 10 minutes) and answered with `RESEND_TOO_SOON` inside it.
+       * `vendors.manage` (owner, admin, office), the permission that sends sheets in the first place.
+       */
+      resendEmail: proc("vendors.manage")
+        .route({ method: "POST", path: "/{sheetId}/resend-email" })
+        .input(z.object({ sheetId: Id }))
+        .output(z.object({ sheetId: Id, sentAt: Timestamp }))
+        .errors({
+          SHEET_NOT_SENT: { status: 409, message: "This sheet has not been sent to a vendor yet" },
+          VENDOR_USES_PORTAL: {
+            status: 409,
+            message: "This vendor gets sheets in the portal, not by email",
+          },
+          RESEND_TOO_SOON: {
+            status: 429,
+            message: "The email was sent recently; try again later",
+            data: z.object({
+              retryAfterSec: z.number().int().nonnegative(),
+              lastSentAt: Timestamp,
+            }),
+          },
+        }),
+    }),
   });
 
 /** Vendor side: one inbox for sheets from every shop that shares with this vendor org. */

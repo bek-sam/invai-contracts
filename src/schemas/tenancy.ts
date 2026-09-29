@@ -38,6 +38,14 @@ export const Org = z.object({
   printsInHouse: z.boolean(),
   /** The outside shop that presses/ships for this org, if any (Etsy production-partner disclosure). */
   productionPartner: ProductionPartner.nullable(),
+  /**
+   * B-162: Saturday counts as a ship day for ship-by math (`companies.settings.shipsSaturday`,
+   * read by `orders/shipby.ts`; was API-only with no way to set it). Optional until the tenancy
+   * module returns it; absent means false.
+   */
+  shipsSaturday: z.boolean().optional(),
+  /** B-35: transfer age (days since printing) at which pick/press views warn. Absent means 30. */
+  transferAgeWarnDays: z.number().int().optional(),
   createdAt: Timestamp,
 });
 export type Org = z.infer<typeof Org>;

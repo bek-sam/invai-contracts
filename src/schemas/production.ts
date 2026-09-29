@@ -151,6 +151,13 @@ export const QueueItem = z.object({
     style: z.string(),
     color: z.string(),
     size: z.string(),
+    /**
+     * Where the blank sits in the shop (B-32, T-22-4): the shelf label ("A-03-2") and, when the
+     * shop keeps blanks in bins, the bin code. Nested here on purpose: `QueueItem.binCode` (below)
+     * is the order's pack tote, a different thing. Optional until the backend fills them.
+     */
+    shelf: z.string().nullable().optional(),
+    binCode: z.string().nullable().optional(),
   }),
   artworkPreviewKey: z.string().nullable(),
   transferId: Id.nullable(),
@@ -159,6 +166,16 @@ export const QueueItem = z.object({
   binCode: z.string().nullable(),
   /** Other units in the same order still open, so packers know when a tote is complete. */
   orderOpenUnits: z.number().int().nonnegative(),
+  /**
+   * Transfer age (B-35, T-22-4): DTF transfers lose adhesion as they age (research 10 §DTF:
+   * 6–12 months shelf life, flag early). `transferPrintedAt` is the sheet's `printedAt` (or its
+   * `receivedAt` when the vendor never reported printing); `transferAgeDays` is whole days since
+   * then; `transferAgeWarning` is true past the org's `transferAgeWarnDays` (default 30). A
+   * warning never blocks a scan. Optional until the backend fills them.
+   */
+  transferPrintedAt: Timestamp.nullable().optional(),
+  transferAgeDays: z.number().int().nonnegative().nullable().optional(),
+  transferAgeWarning: z.boolean().optional(),
 });
 export type QueueItem = z.infer<typeof QueueItem>;
 
@@ -209,6 +226,14 @@ export const MISMATCH_REASONS = [
   "transfer_scrapped",
   "stale_scan",
   "blank_required",
+  /**
+   * The station is under maintenance (`production.maintenance.start`, B-35, T-22-4). A scan
+   * there is a normal blocked result, never a thrown error (architect A4): `ok: false`,
+   * `nextAction: "press"` (the unit still needs pressing, at a station that is open). Appended
+   * last; consumers keyed on this enum: `invai-floor/src/i18n/{en,es}.ts` `floor.mismatch.*`,
+   * `invai-web/src/routes/_app/production/stations.tsx` `mismatch.*`.
+   */
+  "station_maintenance",
 ] as const;
 
 export const NEXT_ACTIONS = [
@@ -233,7 +258,7 @@ export const ScanResult = z.object({
   orderId: Id.nullable(),
   orderNo: z.string().nullable(),
   design: z.object({ id: Id, name: z.string(), code: z.string() }).nullable(),
-  /** What the transfer expects. */
+  /** What the transfer expects. `shelf` / `binCode` are the blank's location (B-32), as on `QueueItem.blank`. */
   expected: z
     .object({
       blankVariantId: Id,
@@ -241,6 +266,8 @@ export const ScanResult = z.object({
       style: z.string(),
       color: z.string(),
       size: z.string(),
+      shelf: z.string().nullable().optional(),
+      binCode: z.string().nullable().optional(),
     })
     .nullable(),
   /** What was scanned as the blank, when it resolved. */
@@ -260,6 +287,9 @@ export const ScanResult = z.object({
   nextAction: z.enum(NEXT_ACTIONS),
   /** Units of this order still open after this scan. */
   orderOpenUnits: z.number().int().nonnegative().nullable(),
+  /** Same meaning as on `QueueItem` (B-35): shown on the press screen after the transfer scan. */
+  transferAgeDays: z.number().int().nonnegative().nullable().optional(),
+  transferAgeWarning: z.boolean().optional(),
 });
 export type ScanResult = z.infer<typeof ScanResult>;
 
@@ -301,6 +331,66 @@ export const Reprint = z.object({
   requestedAt: Timestamp,
 });
 export type Reprint = z.infer<typeof Reprint>;
+
+/**
+ * Why a station is closed (B-35, T-22-4). Heat presses need platen cleaning, temperature and
+ * pressure calibration and the odd repair; `printer_maintenance` covers the in-house printer's
+ * daily nozzle check, white-ink agitation and weekly capping-station cleaning (research 10
+ * §DTF) when the shop treats the printer as a station.
+ */
+export const MAINTENANCE_REASONS = [
+  "cleaning",
+  "calibration",
+  "repair",
+  "printer_maintenance",
+  "other",
+] as const;
+
+/**
+ * One maintenance window on a station, from `start` to `end` (open while `endedAt` is null).
+ * Backed by the production-owned `station_maintenance_events` table, not the tenancy `stations`
+ * row (architect A3): every window is its own audited row, and no wave-22 card owns tenancy.
+ * While a window is open, scans at that station return `mismatch: "station_maintenance"`.
+ */
+export const StationMaintenance = z.object({
+  id: Id,
+  stationId: Id,
+  stationName: z.string(),
+  reason: z.enum(MAINTENANCE_REASONS),
+  note: z.string().nullable(),
+  startedAt: Timestamp,
+  startedBy: Id.nullable(),
+  endedAt: Timestamp.nullable(),
+  endedBy: Id.nullable(),
+});
+export type StationMaintenance = z.infer<typeof StationMaintenance>;
+
+export const MaintenanceStartInput = z.object({
+  stationId: Id,
+  reason: z.enum(MAINTENANCE_REASONS),
+  note: z.string().max(500).nullable().default(null),
+});
+export type MaintenanceStartInput = z.infer<typeof MaintenanceStartInput>;
+
+/** `started` is false when the station was already under maintenance (idempotent; the open window is returned). */
+export const MaintenanceStartResult = z.object({
+  maintenance: StationMaintenance,
+  started: z.boolean(),
+});
+export type MaintenanceStartResult = z.infer<typeof MaintenanceStartResult>;
+
+export const MaintenanceEndInput = z.object({
+  stationId: Id,
+  note: z.string().max(500).nullable().default(null),
+});
+export type MaintenanceEndInput = z.infer<typeof MaintenanceEndInput>;
+
+/** `ended` is false and `maintenance` is the last closed window (or null) when nothing was open (idempotent). */
+export const MaintenanceEndResult = z.object({
+  maintenance: StationMaintenance.nullable(),
+  ended: z.boolean(),
+});
+export type MaintenanceEndResult = z.infer<typeof MaintenanceEndResult>;
 
 /** A tote or bin holding one order's units between stations. */
 export const Bin = z.object({
