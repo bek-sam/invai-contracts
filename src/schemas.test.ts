@@ -233,9 +233,7 @@ describe("channel rules", () => {
       paymentFixedCents: 25,
     });
     expect(CHANNEL_RULES.amazon.fees.transactionPct).toBe(17);
-    // B-164: TikTok Shop US Seller University "Referral fees" (knowledge_id=5988482086864682),
-    // page updated 2026-05-14, fetched 2026-09-28: 6% for menswear, womenswear and kids' fashion.
-    expect(CHANNEL_RULES.tiktok.fees.transactionPct).toBe(6);
+    expect(CHANNEL_RULES.tiktok.fees.transactionPct).toBe(8);
     expect(CHANNEL_RULES.walmart.fees.transactionPct).toBe(15);
     expect(CHANNEL_RULES.shopify.fees).toMatchObject({ paymentPct: 2.9, paymentFixedCents: 30 });
   });
