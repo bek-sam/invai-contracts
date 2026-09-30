@@ -59,6 +59,7 @@ Namespaces (244 procedures):
 | `digest` | `digest` | weekly business review: past weeks, one week, latest for the Today card, thumbs and clicks per insight, shop settings + recipients, preview email |
 | `billing` | `billing` | plan, usage vs limits, change plan (Stripe stubbed) |
 | `privacy` | `privacy` | whole-company export and deletion request (B-23) |
+| `analytics` | `analytics` | business analytics v2 (wave A1): CM1/CM2/CM3 unit economics, losing orders, revenue leakage, shipping margin, profit bridge, break-even, operations (reprints, film waste, waits, press minutes, late drivers), inventory health, supplier trends, design lifecycle, CSV export of any view |
 
 ## How to add a procedure
 
@@ -122,6 +123,11 @@ Namespaces (244 procedures):
   admin, office): a lead closes a press, presser and packer can't, and `stations.manage` stays
   owner/admin only because it issues station tokens. `production.maintenance.list` is
   `production.read` with `auth: floor`. `vendors.sheets.resendEmail` is `vendors.manage`.
+- Wave A1 (business analytics v2, `src/analytics.test.ts`): every `analytics.*` procedure,
+  including `analytics.export`, needs `finance.read` (owner, admin, office) with the default
+  `auth: user`, never floor or station. Designer, presser, packer, receiver and vendor get
+  `FORBIDDEN` (spec AC-E5). Analytics reads never throw for a business outcome: "not enough
+  data" is a null next to its sample count, and `hasEnoughHistory` is a flag on the response.
 
 ## Public link routes (not oRPC)
 

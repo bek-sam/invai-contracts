@@ -2,6 +2,7 @@ import { type AnyContractRouter, type HTTPMethod, isContractProcedure } from "@o
 import type { ProcedureMeta } from "./contract/_base";
 import { ai } from "./contract/ai";
 import { alerts } from "./contract/alerts";
+import { analytics } from "./contract/analytics";
 import { billing } from "./contract/billing";
 import { blanks, designs, products } from "./contract/catalog";
 import { channels, skuRules } from "./contract/channels";
@@ -65,6 +66,9 @@ export const contract = {
   billing,
   // whole-company export and deletion (B-23)
   privacy,
+  // business analytics v2: read-only CM ladder, leakage, shipping margin, bridge, break-even,
+  // operations, inventory health, supplier trends, design lifecycle, CSV export (wave A1)
+  analytics,
 };
 
 export type Contract = typeof contract;

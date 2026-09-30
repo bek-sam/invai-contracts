@@ -4,7 +4,7 @@
  * only assert "at least".
  */
 import { describe, expect, it } from "vitest";
-import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE } from "./compat";
+import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE, isContractVersionAtLeast } from "./compat";
 import { contract, listProcedures, PROCEDURE_PERMISSIONS } from "./contract";
 import { Events } from "./events";
 import { parseRealtimeEvent } from "./realtime";
@@ -337,8 +337,9 @@ describe("settings and listings (B-162, B-167)", () => {
 });
 
 describe("version", () => {
-  it("is 0.8.0 (additive, minor bump on 0.x) and the floor baseline is untouched (ADR 0012)", () => {
-    expect(CONTRACT_VERSION).toBe("0.8.0");
+  it("is at least 0.8.0 (additive, minor bump on 0.x) and the floor baseline is untouched (ADR 0012)", () => {
+    // The newest wave's test pins the exact version (src/analytics.test.ts), so a bump touches one file.
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.8.0")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

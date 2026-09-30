@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.0
+
+Business analytics v2 (T-A2, wave A1, B-169; spec `specs/business-analytics-v2.md`). Additive
+only. Version decision: minor bump per the 0.x rule (every addition bumps minor). No floor- or
+station-facing shape changes, so `FLOOR_COMPAT_BASELINE` stays at 0.3.0 (ADR 0012 §5).
+
+- **Added** the `analytics` namespace (`/analytics`, all `finance.read`, `auth: user`), eleven
+  procedures: `unitEconomics`, `losingOrders`, `leakage`, `shippingMargin`, `profitBridge`,
+  `breakEven`, `operations`, `inventoryHealth`, `supplierTrends`, `designLifecycle` (all `GET`)
+  and `export` (`POST /analytics/export-csv`, same `{ key }` output as `finance.exportCsv`).
+  Range reads take the shared `Period`; `inventoryHealth` takes `days`, `designLifecycle` an
+  optional `asOf`. Domain error `PERIOD_INVALID` (400). Schemas in `src/schemas/analytics.ts`.
+  Implementers: T-A3 (the six finance reads), T-A4 (`operations`), T-A5 (`inventoryHealth`,
+  `supplierTrends`, `designLifecycle`, `export`); the backend carries a `stubRouter` until then.
+- **Added** `CostSettings.fixedMonthlyCents` (`Cents.nonnegative().nullish()`), writable through
+  `finance.costSettings.update` via `CostSettingsInput`. Persisted by T-A3.
+- **Added** `Shipment.destZone` (int 1..9, nullish, output only): the carrier zone set at label
+  time by T-A4; no address, ZIP or name is stored with it.
+- **Added** five `AssistantEvent` `tool_call.name` values at the end: `get_unit_economics`,
+  `explain_profit_change`, `get_operations_health`, `get_inventory_health`,
+  `get_shipping_insights` (built in T-A8).
+
 ## 0.8.0
 
 Contract additions for the P2 sweep (T-22-1, wave 22: B-25, B-32, B-35, B-102, B-162, B-164,

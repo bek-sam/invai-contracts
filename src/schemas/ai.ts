@@ -167,6 +167,14 @@ export const AssistantEvent = z.discriminatedUnion("type", [
       "get_seasonality",
       "get_price_position",
       "simulate_price",
+      // Added in wave A1 (T-A2, spec business-analytics-v2): the five v6 analytics tools, built
+      // in T-A8. Additive, at the end. Their `{data, summary, answer}` shapes and the ≤ 20-row
+      // limit live in the backend (`modules/ai/assistant-tools.ts`), not here.
+      "get_unit_economics",
+      "explain_profit_change",
+      "get_operations_health",
+      "get_inventory_health",
+      "get_shipping_insights",
     ]),
     input: z.record(z.string(), z.unknown()),
   }),

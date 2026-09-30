@@ -46,6 +46,13 @@ export const Shipment = z.object({
   voidedAt: Timestamp.nullable(),
   /** T-7-1: last time this shipment's tracking went into a CSV export (`shipping.exportTracking`). */
   exportedAt: Timestamp.nullable(),
+  /**
+   * Carrier zone 1..9 for `analytics.shippingMargin({groupBy: "zone"})` (wave A1, T-A2/T-A4).
+   * Set once at label time from origin and destination ZIP3 in memory; no address, ZIP or name is
+   * stored alongside it (AC-A4). Output only (no input carries it); optional so shipments labeled
+   * before T-A4 and clients one version behind keep working.
+   */
+  destZone: z.number().int().min(1).max(9).nullish(),
   createdAt: Timestamp,
   updatedAt: Timestamp,
 });

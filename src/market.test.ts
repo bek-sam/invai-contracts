@@ -310,12 +310,16 @@ describe("assistant event additions are additive (card AC1)", () => {
     ).toBe(true);
   });
 
-  it("the four market tool names are at the end of the tool_call enum", () => {
+  it("the four market tool names sit together, in order, after the wave 17 tools", () => {
     const toolCall = AssistantEvent.options.find(
       (o) => o.shape.type.value === "tool_call",
     ) as z.ZodObject<{ name: z.ZodEnum<Record<string, string>> }>;
     const names = toolCall.shape.name.options;
-    expect(names.slice(-4)).toEqual([
+    // Wave A1 appended five analytics tools after these; the newest wave's test
+    // (src/analytics.test.ts) holds the "at the end" assertion for the whole enum.
+    const start = names.indexOf("get_market_trend");
+    expect(start).toBeGreaterThan(names.indexOf("get_fulfillment_health"));
+    expect(names.slice(start, start + 4)).toEqual([
       "get_market_trend",
       "get_seasonality",
       "get_price_position",

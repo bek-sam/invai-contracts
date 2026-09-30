@@ -99,6 +99,14 @@ export const CostSettings = z.object({
   laborMinutesPerItem: z.number().nonnegative(),
   /** How ad spend is spread over orders: by channel revenue share or evenly per order. */
   adsAllocation: z.enum(["revenue_share", "per_order"]),
+  /**
+   * Fixed monthly costs (rent, salaries, software) for `analytics.breakEven` (wave A1, T-A2).
+   * Optional on output so handlers and clients one version behind keep working; null or absent
+   * means "not set" and the break-even card shows its prompt instead of a number (AC-A6). Per-unit
+   * labor is already inside CM: the settings screen must say not to count it here again.
+   * Writable through `finance.costSettings.update` (`CostSettingsInput` is this `.partial()`).
+   */
+  fixedMonthlyCents: Cents.nonnegative().nullish(),
   updatedAt: Timestamp,
 });
 export type CostSettings = z.infer<typeof CostSettings>;

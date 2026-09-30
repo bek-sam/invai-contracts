@@ -8,6 +8,7 @@ export * from "./realtime";
 export * from "./roles";
 export * from "./schemas/ai";
 export * from "./schemas/alerts";
+export * from "./schemas/analytics";
 export * from "./schemas/billing";
 export * from "./schemas/catalog";
 export * from "./schemas/channels";
