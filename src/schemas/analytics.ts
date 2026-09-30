@@ -224,7 +224,11 @@ export const ShippingMargin = z.object({
   groupBy: ShippingMarginGroup,
   rows: z.array(ShippingMarginRow),
   totals: ShippingMarginTotals,
-  /** For `groupBy: zone`: labeled shipments without a `destZone` (labeled before T-A4), left out of rows. Otherwise 0. */
+  /**
+   * For `groupBy: zone`: labeled orders whose shipments carry no `destZone` (labeled before T-A4),
+   * left out of rows. Counts orders, the unit of every grouping's rows; the name stays for
+   * compatibility (0.10.0 text fix, no shape change). Otherwise 0.
+   */
   shipmentsWithoutZone: Count,
 });
 export type ShippingMargin = z.infer<typeof ShippingMargin>;

@@ -50,8 +50,28 @@ export const AI_SUMMARY_MODES = ["off", "shadow", "on"] as const;
 export const AiSummaryMode = z.enum(AI_SUMMARY_MODES);
 export type AiSummaryMode = z.infer<typeof AiSummaryMode>;
 
-/** Detectors D1..D8 (spec step 5) plus `market` for a Market watch item (wave 18 recommendation). */
-export const DIGEST_DETECTORS = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "market"] as const;
+/**
+ * Detectors D1..D8 (spec step 5) plus `market` for a Market watch item (wave 18 recommendation).
+ * D9..D13 (0.10.0, `specs/business-analytics-v2.md` Track E) are appended after `market` so the
+ * order stays additive: D9 shipping loss, D10 losing orders, D11 dead stock or size gap, D12 blank
+ * price up, D13 break-even pace. The same detectors feed the digest and Today's action panel.
+ */
+export const DIGEST_DETECTORS = [
+  "D1",
+  "D2",
+  "D3",
+  "D4",
+  "D5",
+  "D6",
+  "D7",
+  "D8",
+  "market",
+  "D9",
+  "D10",
+  "D11",
+  "D12",
+  "D13",
+] as const;
 export const DigestDetector = z.enum(DIGEST_DETECTORS);
 export type DigestDetector = z.infer<typeof DigestDetector>;
 
@@ -72,6 +92,14 @@ export const DIGEST_ACTION_KINDS = [
   "reorder_blank", // D7
   "market", // Market watch item promoted or shown; action is the recommendation's rule action
   "none", // D8 win
+  // 0.10.0 (Track E). D11 has two kinds, not one kind with a params discriminator, so the apps'
+  // exhaustive switch on `kind` picks the wording and nobody branches on which params are set.
+  "review_shipping_prices", // D9 shipping loss per order on {{channel}}
+  "review_losing_orders", // D10 losing orders over 5% of orders
+  "review_dead_stock", // D11 dead stock over 15% of stock value ({{style}} {{color}})
+  "restock_size_gap", // D11 size gap under -15 points with under 14 days of cover ({{size}})
+  "review_blank_cost", // D12 blank unit cost up 5% or more vs 3 months ago ({{supplierName}})
+  "see_break_even", // D13 pace below break-even (only with fixed costs set)
 ] as const;
 export const DigestActionKind = z.enum(DIGEST_ACTION_KINDS);
 export type DigestActionKind = z.infer<typeof DigestActionKind>;
@@ -172,6 +200,23 @@ export const DigestActionParams = z.object({
   blankVariantId: Id.optional(),
   blankName: z.string().optional(),
   n: z.number().int().nonnegative().optional(),
+  // 0.10.0 (D9..D13). Product and supplier words only: no buyer name, address or note ever rides
+  // here, because params are rendered in email and on Today for every `finance.read` member.
+  /** Blank style as the supplier names it, e.g. `Bella+Canvas 3001` (D11, D12). */
+  style: z.string().max(120).optional(),
+  /** Blank color, e.g. `Heather Navy` (D11, D12). */
+  color: z.string().max(60).optional(),
+  /** Blank size label, e.g. `XL` (D11 size gap). */
+  size: z.string().max(20).optional(),
+  supplierId: Id.optional(),
+  supplierName: z.string().max(120).optional(),
+  /**
+   * Signed percentage points, e.g. -18 for a size 18 points below its share of sales (D11) or 6.5
+   * for a 6.5% blank cost rise (D12). Not a ratio: shown as is with a `%` or `pts` suffix.
+   */
+  points: z.number().optional(),
+  /** Signed integer cents: the change the action is about (D9 loss per order vs the median, D12 unit cost change). */
+  deltaCents: Cents.optional(),
 });
 export type DigestActionParams = z.infer<typeof DigestActionParams>;
 

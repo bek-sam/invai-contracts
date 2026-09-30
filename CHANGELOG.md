@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.10.0
+
+Digest D9..D13 and Today's action panel (T-A10, wave A2, B-176/B-177; spec
+`specs/business-analytics-v2.md` Track E; rulings in `waves/A2/reviews/plan-architect.md`).
+Additive only; minor bump per the 0.x rule. No floor- or station-facing shape changes, so
+`FLOOR_COMPAT_BASELINE` stays at 0.3.0 (ADR 0012 §5).
+
+- **Added** `DIGEST_DETECTORS` values `D9`..`D13` at the end (after `market`).
+- **Added** six `DIGEST_ACTION_KINDS` at the end: `review_shipping_prices` (D9),
+  `review_losing_orders` (D10), `review_dead_stock` and `restock_size_gap` (D11),
+  `review_blank_cost` (D12), `see_break_even` (D13). Exhaustive switches on the kind break:
+  `invai-web/src/components/digest/digest-copy.ts` (`digestActionText`).
+- **Added** optional `DigestActionParams` fields `style`, `color`, `size`, `supplierId`,
+  `supplierName`, `points` (signed pct points), `deltaCents` (signed integer cents). No buyer data.
+- **Added** `today.actions` (`GET /today/actions`, `finance.read`, `auth: user`) returning
+  `TodayActions` (at most 5 ranked `TodayAction`s; `generatedAt` null until the day's set is
+  built) and `today.recordActionClick` (`POST /today/actions/clicks`, `finance.read`, first click
+  wins, domain error `ACTION_NOT_FOUND` 404). Implementer: T-A9 (stubbed until then).
+- **Changed (text only)** `ShippingMargin.shipmentsWithoutZone` doc: it counts labeled orders, the
+  unit of every grouping's rows. Name and type unchanged.
+
 ## 0.9.0
 
 Business analytics v2 (T-A2, wave A1, B-169; spec `specs/business-analytics-v2.md`). Additive

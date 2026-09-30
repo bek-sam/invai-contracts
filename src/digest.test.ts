@@ -193,11 +193,12 @@ describe("digest schemas (card AC3)", () => {
     );
   });
 
-  it("insight detector is D1..D8 or market, with a fixed action kind and an in-app href", () => {
+  it("insight detector is a known detector, with a fixed action kind and an in-app href", () => {
     for (const d of ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "market"]) {
       expect(DigestInsight.safeParse({ ...insight, detector: d }).success, d).toBe(true);
     }
-    expect(DigestInsight.safeParse({ ...insight, detector: "D9" }).success).toBe(false);
+    // D9..D13 became valid in 0.10.0 (today-actions.test.ts); an unknown detector still fails.
+    expect(DigestInsight.safeParse({ ...insight, detector: "D14" }).success).toBe(false);
     expect(
       DigestInsight.safeParse({ ...insight, action: { ...insight.action, kind: "ship_now" } })
         .success,
