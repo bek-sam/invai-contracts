@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE } from "./compat";
+import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE, isContractVersionAtLeast } from "./compat";
 import { contract, listProcedures, PROCEDURE_PERMISSIONS } from "./contract";
 import { hasPermission, ROLES } from "./roles";
 import { ShippingMargin } from "./schemas/analytics";
@@ -196,9 +196,9 @@ describe("shipmentsWithoutZone (text fix only)", () => {
 });
 
 describe("version", () => {
-  it("is 0.10.0 (additive, minor bump on 0.x) and the floor baseline is untouched (ADR 0012)", () => {
-    // The newest wave's test pins the exact version, so a bump touches one file.
-    expect(CONTRACT_VERSION).toBe("0.10.0");
+  it("is at least 0.10.0 and the floor baseline is untouched (ADR 0012)", () => {
+    // The exact current version is asserted once, in the newest wave's test (p5-reasons.test.ts).
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.10.0")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

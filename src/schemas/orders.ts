@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CHANNELS, ORDER_ITEM_STATES, ORDER_STATUSES, STATIONS } from "../states";
 import { Address, Cents, Id, NamedRef, Timestamp } from "./common";
-import { PackOverride } from "./production";
+import { PackOverride, REPRINT_REASONS } from "./production";
 
 export const PersonalizationAnswer = z.object({
   question: z.string(),
@@ -217,6 +217,50 @@ export const TIMELINE_KINDS = [
   "address_updated", // NEW: written by orders.updateAddress
 ] as const;
 
+/**
+ * 0.11.0 (B-238, wave P5): the transition reasons the backend writes today, as codes the client
+ * translates. Only `state_changed` entries carry one. The backend derives it at read time from the
+ * stored reason string (rules in `waves/P5/reviews/plan-architect.md` R1); a free-text or unknown
+ * reason gets no code and the client falls back to `message`. A producer that adds a reason adds
+ * its code at the end; consumers must treat an unknown code like a missing one (Record lookup with
+ * a fallback, never an exhaustive switch).
+ */
+export const TIMELINE_REASON_CODES = [
+  "unknown_sku", // import: no SKU match -> needs_mapping
+  "mapped",
+  "not_personalized",
+  "artwork_uploaded",
+  "artwork_approved",
+  "artwork_edited",
+  "artwork_rerendered",
+  "artwork_rendered",
+  "artwork_failed",
+  "artwork_flagged",
+  "on_sheet", // reasonParams.sheetName
+  "sheet_received", // reasonParams.sheetName
+  "scan_match", // pressed after a matching transfer scan
+  "reprint", // reasonParams.reprintReason when it is a known reason
+  "qc_fail", // pressed -> ready from QC (seed history)
+  "qc_pass",
+  "held", // reasonParams.holdReason
+  "released",
+  "cancelled", // reasonParams.cancelReason
+  "tracking_pushed",
+  "carrier_accepted",
+  "carrier_delivered",
+] as const;
+export const TimelineReasonCode = z.enum(TIMELINE_REASON_CODES);
+export type TimelineReasonCode = z.infer<typeof TimelineReasonCode>;
+
+/** Values for a reason code's line. Every key optional; never buyer text. */
+export const TimelineReasonParams = z.object({
+  sheetName: z.string().max(120).optional(),
+  reprintReason: z.enum(REPRINT_REASONS).optional(),
+  holdReason: z.enum(HOLD_REASONS).optional(),
+  cancelReason: z.enum(CANCEL_REASONS).optional(),
+});
+export type TimelineReasonParams = z.infer<typeof TimelineReasonParams>;
+
 export const TimelineEntry = z.object({
   id: Id,
   at: Timestamp,
@@ -231,6 +275,10 @@ export const TimelineEntry = z.object({
   to: z.enum(ORDER_ITEM_STATES).nullable(),
   message: z.string(),
   meta: z.record(z.string(), z.unknown()),
+  /** 0.11.0: the transition reason as a code (state_changed entries only); absent when unknown. */
+  reasonCode: TimelineReasonCode.optional(),
+  /** 0.11.0: values for the `reasonCode` line, e.g. `{ sheetName: "S-12" }`. */
+  reasonParams: TimelineReasonParams.optional(),
 });
 export type TimelineEntry = z.infer<typeof TimelineEntry>;
 
