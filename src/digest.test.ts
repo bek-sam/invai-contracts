@@ -345,11 +345,14 @@ describe("digest.ready event (card AC5) and appended enum values", () => {
     expect(Events["digest.ready"].parse(payload)).toEqual(payload);
     expect(parseRealtimeEvent("digest.ready", payload)).toEqual(payload);
     expect(parseRealtimeEvent("digest.ready", { digestId: id, weekKey: "39" })).toBeNull();
-    expect(Object.keys(RealtimeEvents).at(-1)).toBe("digest.ready");
+    // Later waves append after it (photos.test.ts pins the current end).
+    expect(Object.keys(RealtimeEvents)).toContain("digest.ready");
   });
 
   it("digest_narrative and ai_summary_breaker are appended at the end (consumers mirror them)", () => {
-    expect(CREDIT_KINDS.at(-1)).toBe("digest_narrative");
+    expect(CREDIT_KINDS.indexOf("digest_narrative")).toBeGreaterThan(
+      CREDIT_KINDS.indexOf("market_niche"),
+    );
     expect(ALERT_KINDS.at(-1)).toBe("ai_summary_breaker");
     expect(new Set(CREDIT_KINDS).size).toBe(CREDIT_KINDS.length);
     expect(new Set(ALERT_KINDS).size).toBe(ALERT_KINDS.length);

@@ -19,7 +19,8 @@ import { Id, JobRef, Page, paginated, Timestamp } from "../schemas/common";
 import { CHANNELS, LISTING_DRAFT_STATES } from "../states";
 import { base, proc } from "./_base";
 
-const CREDIT_ERRORS = {
+/** Shared with `photos.*` (ADR 0023) so the web's upgrade dialog handles both. */
+export const CREDIT_ERRORS = {
   CREDITS_EXHAUSTED: {
     status: 402,
     message: "AI credits used up for this period",
@@ -28,7 +29,7 @@ const CREDIT_ERRORS = {
 } as const;
 
 /** Thrown before any provider.structured/provider.assistant call once a daily cap is hit. */
-const SPEND_CAP_ERRORS = {
+export const SPEND_CAP_ERRORS = {
   AI_SPEND_CAP_REACHED: {
     status: 429,
     message: "AI spend cap reached; try again after it resets",

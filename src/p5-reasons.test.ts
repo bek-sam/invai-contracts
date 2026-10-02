@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE } from "./compat";
+import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE, isContractVersionAtLeast } from "./compat";
 import {
   ALERT_KINDS,
   ALERT_MESSAGE_CODES,
@@ -132,9 +132,9 @@ describe("TimelineEntry.reasonCode + reasonParams (B-238)", () => {
 });
 
 describe("version", () => {
-  it("is 0.11.0 (additive, minor bump on 0.x) and the floor baseline is untouched (ADR 0012)", () => {
-    // The newest wave's test pins the exact version, so a bump touches one file.
-    expect(CONTRACT_VERSION).toBe("0.11.0");
+  it("is at least 0.11.0 and the floor baseline is untouched (ADR 0012)", () => {
+    // The newest wave's test (photos.test.ts) pins the exact version, so a bump touches one file.
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.11.0")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { CHANNELS, LISTING_DRAFT_STATES } from "../states";
 import { Cents, Id, Timestamp } from "./common";
 import { RecommendationRef, SignalSourceRef } from "./market";
+import { ImageDisclosures } from "./photos";
 
 export const ListingContent = z.object({
   title: z.string(),
@@ -103,6 +104,11 @@ export const ListingDraft = z.object({
   /** Set once a compliance review is recorded for a medium-risk draft (25 <= riskScore < 60). */
   trademarkReview: TrademarkReview.nullable(),
   mockupKeys: z.array(z.string()),
+  /**
+   * Set when listing photos are attached (wave 26/27, own column `image_disclosures`, never in
+   * `content`). Optional so clients one version behind keep parsing.
+   */
+  imageDisclosures: ImageDisclosures.optional(),
   model: z.string().nullable(),
   creditsUsed: z.number().int().nonnegative(),
   approvedBy: Id.nullable(),
@@ -243,6 +249,10 @@ export const CREDIT_KINDS = [
   // Wave 19 (T-19-1): the digest's AI summary, charged once per digest (ledger ref = the digest)
   // even while it runs in shadow mode. The backend mirrors it in `src/db/schema/ai.ts` (T-19-2).
   "digest_narrative",
+  // Wave 26/27 (ADR 0023): one template composition (garment x view x color) and one AI scene
+  // image. Mirrored in the backend `src/db/schema/ai.ts` (T-26-3).
+  "photo_image",
+  "photo_scene",
 ] as const;
 
 export const CreditsBalance = z.object({

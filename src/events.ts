@@ -158,6 +158,10 @@ export const Events = {
   // digest (wave 19): published when a digest is stored `ready`; the delivery job and the Today
   // card hang off it. The envelope's `orgId` carries the company, as for every other event.
   "digest.ready": z.object({ digestId: Id, weekKey: WeekKey }),
+  // listing photos (wave 26/27, ADR 0023): the set is created in the request, each composition
+  // renders in its own job; `completed` fires once every image is rendered or failed.
+  "photo_set.created": z.object({ setId: Id, designId: Id, compositionIds: z.array(Id) }),
+  "photo_set.completed": z.object({ setId: Id, status: z.enum(["ready", "failed"]) }),
 } as const;
 
 export type EventName = keyof typeof Events;

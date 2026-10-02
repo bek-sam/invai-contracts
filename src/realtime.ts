@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Id, Timestamp } from "./schemas/common";
 import { WeekKey } from "./schemas/digest";
+import { PHOTO_SET_STATUSES } from "./schemas/photos";
 import {
   JOB_STATES,
   ORDER_ITEM_STATES,
@@ -101,6 +102,19 @@ export const RealtimeEvents = {
    * SSE stream, so no company id in the payload. The floor never subscribes to it.
    */
   "digest.ready": z.object({ digestId: Id, weekKey: WeekKey }),
+  /**
+   * Listing photos (wave 26): one event per image state change or zip/push result, so the web
+   * refreshes `photos.getSet` without polling. Web maps it in `keysForEvent` (T-26-5); the floor
+   * never subscribes to it.
+   */
+  "photo_set.updated": z.object({
+    setId: Id,
+    designId: Id,
+    status: z.enum(PHOTO_SET_STATUSES),
+    rendered: z.number().int().nonnegative(),
+    failed: z.number().int().nonnegative(),
+    total: z.number().int().nonnegative(),
+  }),
 } as const;
 
 export type RealtimeEventName = keyof typeof RealtimeEvents;

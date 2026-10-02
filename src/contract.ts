@@ -13,6 +13,7 @@ import { inventory } from "./contract/inventory";
 import { market } from "./contract/market";
 import { orderItems, orders } from "./contract/orders";
 import { personalization } from "./contract/personalization";
+import { photos } from "./contract/photos";
 import { privacy } from "./contract/privacy";
 import { production } from "./contract/production";
 import { shipping } from "./contract/shipping";
@@ -69,6 +70,8 @@ export const contract = {
   // business analytics v2: read-only CM ladder, leakage, shipping margin, bridge, break-even,
   // operations, inventory health, supplier trends, design lifecycle, CSV export (wave A1)
   analytics,
+  // listing photos: design analysis, template photo sets, approval, zip, attach, Shopify push (wave 26/27)
+  photos,
 };
 
 export type Contract = typeof contract;

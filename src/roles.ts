@@ -105,6 +105,10 @@ export const PERMISSIONS = [
   // existing permission fits, so it gets its own. Reading niches is catalog.read;
   // recommendations are finance.read.
   "market.niches.manage",
+  // Listing photos (wave 26, ADR 0023): same tier as managing AI listing drafts (owner, admin,
+  // office, designer). Its own pair so the photo credits and approvals can be audited apart.
+  "photos.read",
+  "photos.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -153,6 +157,8 @@ const OFFICE: Permission[] = [
   "ai.credits.read",
   "alerts.read",
   "market.niches.manage",
+  "photos.read",
+  "photos.manage",
 ];
 
 const DESIGNER: Permission[] = [
@@ -175,6 +181,8 @@ const DESIGNER: Permission[] = [
   "ai.credits.read",
   "alerts.read",
   "market.niches.manage",
+  "photos.read",
+  "photos.manage",
 ];
 
 const PRESSER: Permission[] = [
