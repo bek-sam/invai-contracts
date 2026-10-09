@@ -80,7 +80,7 @@ export const ItemFlag = z.object({
 export type ItemFlag = z.infer<typeof ItemFlag>;
 
 export const ItemArtworkSummary = z.object({
-  status: z.enum(["none", "pending", "rendered", "flagged", "approved", "failed"]),
+  status: z.enum(["none", "pending", "rendered", "flagged", "approved", "failed", "purged"]),
   fileKey: z.string().nullable(),
   previewKey: z.string().nullable(),
 });

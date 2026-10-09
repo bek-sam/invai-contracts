@@ -118,12 +118,18 @@ export const RenderPreview = z.object({
   flags: z.array(ArtworkFlag),
 });
 
+/**
+ * `purged` (0.14.0, appended last): buyer text and art were removed under the PII clocks (ADR 0025,
+ * S-56). It is terminal for the render: re-enter the personalization to print again. Consumers with
+ * an exhaustive switch or a `counts` literal must add the key.
+ */
 export const ITEM_ARTWORK_STATUSES = [
   "pending",
   "rendered",
   "flagged",
   "approved",
   "failed",
+  "purged",
 ] as const;
 
 /** Rendered artwork for one personalized order item. */

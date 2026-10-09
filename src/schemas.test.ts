@@ -305,3 +305,30 @@ describe("account security contract (T-28-1)", () => {
     ).toBe(false);
   });
 });
+
+describe("artwork purged status (0.14.0)", () => {
+  it("appends purged last and keeps old values", async () => {
+    const { ITEM_ARTWORK_STATUSES, ItemArtworkSummary } = await import("./index");
+    expect(ITEM_ARTWORK_STATUSES.at(-1)).toBe("purged");
+    expect(ITEM_ARTWORK_STATUSES.slice(0, 5)).toEqual([
+      "pending",
+      "rendered",
+      "flagged",
+      "approved",
+      "failed",
+    ]);
+    for (const status of [
+      "none",
+      "pending",
+      "rendered",
+      "flagged",
+      "approved",
+      "failed",
+      "purged",
+    ]) {
+      expect(ItemArtworkSummary.parse({ status, fileKey: null, previewKey: null }).status).toBe(
+        status,
+      );
+    }
+  });
+});

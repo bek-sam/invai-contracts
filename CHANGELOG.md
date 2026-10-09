@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.0
+
+Artwork `purged` status (T-29-5, wave 29; S-56, B-293). Additive; minor bump per the 0.x rule.
+`FLOOR_COMPAT_BASELINE` stays 0.3.0 (the floor never reads this status).
+
+- **Added** `"purged"` (last) to `ITEM_ARTWORK_STATUSES` and `ItemArtworkSummary.status`: buyer text and
+  art removed under the PII clocks; re-enter to print. Consumer breaks: the `counts` record in
+  `personalization.artwork.list` is now exhaustive over `purged`; backend T-29-1 fixes it.
+
 ## 0.13.0
 
 Account security (T-28-1, wave 28; Amazon DPP, ADR 0025). Additive only; minor bump per the 0.x
