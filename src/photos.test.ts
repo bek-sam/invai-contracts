@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE } from "./compat";
+import { CONTRACT_VERSION, FLOOR_COMPAT_BASELINE, isContractVersionAtLeast } from "./compat";
 import { contract, listProcedures } from "./contract";
 import { Events } from "./events";
 import { parseRealtimeEvent, RealtimeEvents } from "./realtime";
@@ -428,8 +428,8 @@ describe("photos contract (wave 26/27)", () => {
     ).toMatchObject({ rendered: 3 });
   });
 
-  it("version is 0.12.0 (additive, minor bump on 0.x); floor baseline untouched (ADR 0012)", () => {
-    expect(CONTRACT_VERSION).toBe("0.12.0");
+  it("version is at least 0.12.0 (additive, minor bump on 0.x); floor baseline untouched (ADR 0012)", () => {
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.12.0")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.0
+
+Account security (T-28-1, wave 28; Amazon DPP, ADR 0025). Additive only; minor bump per the 0.x
+rule. No floor- or station-facing shape changes, so `FLOOR_COMPAT_BASELINE` stays 0.3.0.
+
+- **Added** `COMMON_ERRORS.MFA_REQUIRED` (403, `data: { deadline: Timestamp | null }`). Implementer
+  T-28-2 (backend guard); web T-28-4 routes it to the setup page and must not toast it.
+- **Added** optional `Me.mfa { required, enabled, deadline }`.
+- **Added** `AUTH_ERROR_CODES` (`ACCOUNT_LOCKED` 423, `PASSWORD_REUSED` 400,
+  `MFA_DISABLE_NOT_ALLOWED` 403) and `AccountLockedBody` (Better Auth errors, not oRPC).
+
 ## 0.10.0
 
 Digest D9..D13 and Today's action panel (T-A10, wave A2, B-176/B-177; spec

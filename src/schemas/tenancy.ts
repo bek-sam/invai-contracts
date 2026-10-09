@@ -92,6 +92,16 @@ export const Me = z.object({
   /** Present for floor sessions only. */
   station: z.object({ id: Id, name: z.string(), kind: z.enum(STATIONS).nullable() }).nullable(),
   onboarding: OnboardingChecklist.nullable(), // null for vendor orgs
+  /**
+   * Two-step sign-in state (wave 28, T-28-2, Amazon DPP). Optional so floor sessions and older
+   * backends stay valid. `required` = the user holds an active owner or admin membership in any
+   * non-sample org (vendor orgs only carry the `vendor` role, so vendors are never required;
+   * sample workspaces do not count). `deadline` = when the grace period ends (null when not
+   * required).
+   */
+  mfa: z
+    .object({ required: z.boolean(), enabled: z.boolean(), deadline: Timestamp.nullable() })
+    .optional(),
 });
 export type Me = z.infer<typeof Me>;
 
@@ -227,3 +237,24 @@ export const AuditEntry = z.object({
   meta: z.record(z.string(), z.unknown()),
 });
 export type AuditEntry = z.infer<typeof AuditEntry>;
+
+/**
+ * Better Auth error codes (not oRPC errors) thrown from the backend's auth hooks (wave 28,
+ * T-28-2, ADR 0025). They are constants here so the backend and the web share the literal.
+ * HTTP status: ACCOUNT_LOCKED 423 (sign-in; see `AccountLockedBody`), PASSWORD_REUSED 400
+ * (change or reset password), MFA_DISABLE_NOT_ALLOWED 403 (a required user turning two-step off).
+ */
+export const AUTH_ERROR_CODES = [
+  "ACCOUNT_LOCKED",
+  "PASSWORD_REUSED",
+  "MFA_DISABLE_NOT_ALLOWED",
+] as const;
+export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number];
+
+/** Body of the 423 on sign-in after too many wrong passwords; retry after `retryAfterSec`. */
+export const AccountLockedBody = z.object({
+  code: z.literal("ACCOUNT_LOCKED"),
+  message: z.string(),
+  retryAfterSec: z.number().int(),
+});
+export type AccountLockedBody = z.infer<typeof AccountLockedBody>;

@@ -129,6 +129,15 @@ Namespaces (244 procedures):
   `FORBIDDEN` (spec AC-E5). Analytics reads never throw for a business outcome: "not enough
   data" is a null next to its sample count, and `hasEnoughHistory` is a flag on the response.
 
+## Account security (wave 28)
+
+- `COMMON_ERRORS.MFA_REQUIRED` (403, `data.deadline`) is answered by every user-session procedure
+  except `me.get` and `me.switchOrg` once an owner or admin's grace period is over. `Me.mfa`
+  (`required`, `enabled`, `deadline`) is optional; `required` means an active owner or admin
+  membership in any non-sample org (vendors never).
+- Better Auth errors (not oRPC): `AUTH_ERROR_CODES` = `ACCOUNT_LOCKED` (423, body
+  `AccountLockedBody` with `retryAfterSec`), `PASSWORD_REUSED` (400), `MFA_DISABLE_NOT_ALLOWED` (403).
+
 ## Public link routes (not oRPC)
 
 Email links must work without a session and survive link scanners, so they are plain HTTP routes

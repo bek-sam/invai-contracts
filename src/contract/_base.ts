@@ -1,6 +1,7 @@
 import { type ErrorMap, oc } from "@orpc/contract";
 import { z } from "zod";
 import type { Permission } from "../roles";
+import { Timestamp } from "../schemas/common";
 import { ORDER_ITEM_STATES } from "../states";
 
 /**
@@ -59,6 +60,17 @@ export const COMMON_ERRORS = {
   EMAIL_NOT_VERIFIED: {
     status: 403,
     message: "Verify your email first",
+  },
+  /**
+   * The caller is an owner or admin without two-step sign-in and the grace period is over
+   * (wave 28, T-28-2, Amazon DPP, ADR 0025). `deadline` is when the grace ended (null when it is
+   * not known). Every procedure except `me.get` and `me.switchOrg` answers this, so the web
+   * routes to the setup page. Not the same as `MFA_DISABLE_NOT_ALLOWED` (a Better Auth code).
+   */
+  MFA_REQUIRED: {
+    status: 403,
+    message: "Turn on two-step sign-in to continue",
+    data: z.object({ deadline: Timestamp.nullable() }),
   },
   /**
    * A real-money action (Stripe checkout or portal, a paid plan) inside a sample workspace

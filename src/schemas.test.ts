@@ -271,3 +271,37 @@ describe("events", () => {
     expect(Object.keys(RealtimeEvents)).toContain("sheet.status_changed");
   });
 });
+
+describe("account security contract (T-28-1)", () => {
+  it("MFA_REQUIRED is a 403 with a nullable deadline", async () => {
+    const { COMMON_ERRORS } = await import("./contract/_base");
+    const e = COMMON_ERRORS.MFA_REQUIRED;
+    expect(e.status).toBe(403);
+    expect(e.data.safeParse({ deadline: null }).success).toBe(true);
+    expect(e.data.safeParse({ deadline: "2026-10-16T00:00:00.000Z" }).success).toBe(true);
+    expect(e.data.safeParse({ deadline: "soon" }).success).toBe(false);
+  });
+  it("Me.mfa is optional and checked when present", async () => {
+    const { Me } = await import("./schemas/tenancy");
+    const shape = Me.shape.mfa;
+    expect(shape.safeParse(undefined).success).toBe(true);
+    expect(shape.safeParse({ required: true, enabled: false, deadline: null }).success).toBe(true);
+    expect(shape.safeParse({ required: true, enabled: false }).success).toBe(false);
+  });
+  it("auth error codes and AccountLockedBody are exported", async () => {
+    const api = await import("./index");
+    expect([...api.AUTH_ERROR_CODES]).toEqual([
+      "ACCOUNT_LOCKED",
+      "PASSWORD_REUSED",
+      "MFA_DISABLE_NOT_ALLOWED",
+    ]);
+    expect(
+      api.AccountLockedBody.safeParse({ code: "ACCOUNT_LOCKED", message: "x", retryAfterSec: 60 })
+        .success,
+    ).toBe(true);
+    expect(
+      api.AccountLockedBody.safeParse({ code: "PASSWORD_REUSED", message: "x", retryAfterSec: 60 })
+        .success,
+    ).toBe(false);
+  });
+});
