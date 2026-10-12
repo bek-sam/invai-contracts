@@ -37,3 +37,22 @@ export const SignedDownload = z.object({
   sizeBytes: z.number().int().nonnegative().nullable(),
 });
 export type SignedDownload = z.infer<typeof SignedDownload>;
+
+/** Most keys one `files.downloadUrls` call signs. Sized for a Pick screen (about 27 thumbnails) with headroom. */
+export const MAX_DOWNLOAD_URLS = 60;
+
+/**
+ * Input of `files.downloadUrls`. Duplicate keys are allowed: the output has one item per input
+ * position, so a screen can map results by index without de-duplicating first.
+ */
+export const DownloadUrlsInput = z.object({
+  fileKeys: z.array(z.string().min(1).max(1024)).min(1).max(MAX_DOWNLOAD_URLS),
+  disposition: z.enum(["inline", "attachment"]).default("inline"),
+});
+export type DownloadUrlsInput = z.infer<typeof DownloadUrlsInput>;
+
+/** `download` is null where the single `files.downloadUrl` call would answer NOT_FOUND. */
+export const DownloadUrlsOutput = z.object({
+  items: z.array(z.object({ fileKey: z.string(), download: SignedDownload.nullable() })),
+});
+export type DownloadUrlsOutput = z.infer<typeof DownloadUrlsOutput>;

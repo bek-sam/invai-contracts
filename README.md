@@ -110,7 +110,7 @@ Namespaces (244 procedures):
   - Station tokens are issued by `stations.issueToken` and sent as `Authorization: Station <token>`.
   - `floor.login` (station token + 4-6 digit PIN) returns a floor session bearer token for
     the staff member who owns the PIN; the session carries that user's role and permissions.
-- Vendor users only reach `vendorPortal.*`, `me.*`, `team.*`, `files.downloadUrl` and
+- Vendor users only reach `vendorPortal.*`, `me.*`, `team.*`, `files.downloadUrl`, `files.downloadUrls` and
   `alerts.*`; the backend additionally scopes sheet reads through `vendor_access`.
 - Recipients of the weekly digest are chosen by permission, not role: `digest.list/get/latest/
   feedback/recordClick` need `finance.read` (owner, admin, office); `digest.settings.*` and
