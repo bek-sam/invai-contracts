@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { STATIONS } from "../states";
+import { CHANNELS, STATIONS } from "../states";
 import { Cents, DateOnly, Timestamp } from "./common";
 import { DigestAction, DigestDetector } from "./digest";
 
@@ -16,6 +16,21 @@ export const TodaySummary = z.object({
     atRisk: Count,
     onHold: Count,
     newSinceYesterday: Count,
+    /**
+     * 0.16.0 (B-143): labels bought but not yet scanned by the carrier, per channel, once the
+     * shipment is past its deadline (the pickup deadline when the shop set a pickup time, else
+     * ship-by). Counts shipments (labels), not orders, and includes shipments still waiting for
+     * their first tracker poll after ship-by. Rows with a count of 0 are omitted. Optional so a
+     * cached client and an older API keep parsing.
+     */
+    dispatchAtRisk: z.array(z.object({ channel: z.enum(CHANNELS), count: Count })).optional(),
+    /**
+     * 0.16.0 (B-143): labels past ship-by with no scan whose latest tracker check failed or is
+     * still missing after the post-deadline poll. Exact (an aggregate, not capped at the 200
+     * alerts a pass raises); equals the open `dispatch_overdue_unconfirmed` alerts. Pickup
+     * warnings are never counted here. The Today outage line shows when this is above 0.
+     */
+    dispatchUnconfirmed: Count.optional(),
   }),
   blocked: z.object({
     needsMapping: Count,

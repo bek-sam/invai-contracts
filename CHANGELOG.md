@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.16.0
+
+Dispatch-scan guard (T-41-1, wave 41; B-143, spec `specs/dispatch-scan-guard.md`). Additive only;
+minor bump per the 0.x rule. `FLOOR_COMPAT_BASELINE` stays 0.3.0 (nothing floor-facing).
+
+- **Added** `ALERT_MESSAGE_CODES` (last): `dispatch_pickup_missed`, `dispatch_overdue`,
+  `dispatch_overdue_unconfirmed`, with their `ALERT_MESSAGE_PARAM_KEYS`. Reuses kinds
+  `order_at_risk` / `order_overdue`; no new kind or param key (`hours` doc extended).
+- **Added** optional `TodaySummary.orders.dispatchAtRisk` (`{ channel, count }[]`) and
+  `dispatchUnconfirmed`. Implementers: backend T-41-2 (today); web T-41-3 (copy and Today card).
+- No `pickupCutoff` yet (OI-44 unanswered).
+
 ## 0.14.0
 
 Artwork `purged` status (T-29-5, wave 29; S-56, B-293). Additive; minor bump per the 0.x rule.

@@ -49,6 +49,10 @@ export const ALERT_MESSAGE_CODES = [
   "vendor_email_failed",
   "po_stuck_submitting",
   "webhook_stuck",
+  // 0.16.0 (B-143): "bought is not shipped", a label exists but the carrier has not scanned it.
+  "dispatch_pickup_missed", // order_at_risk (warning): pickup deadline passed, no scan
+  "dispatch_overdue", // order_overdue (critical): past ship-by, no scan, tracker checked
+  "dispatch_overdue_unconfirmed", // order_overdue (critical): past ship-by, tracker could not be checked
 ] as const;
 export const AlertMessageCode = z.enum(ALERT_MESSAGE_CODES);
 export type AlertMessageCode = z.infer<typeof AlertMessageCode>;
@@ -66,7 +70,10 @@ export const AlertParams = z.object({
   shipBy: Timestamp.optional(),
   /** The shop's IANA time zone, e.g. `America/Phoenix`, so dates read as the shop's day (B-137). */
   timeZone: z.string().max(64).optional(),
-  /** Whole hours: left until ship-by (order_at_risk) or since the sheet was sent (sheet_stuck). */
+  /**
+   * Whole hours: left until ship-by (order_at_risk), since the sheet was sent (sheet_stuck), or
+   * since the label was bought (`dispatch_pickup_missed`).
+   */
   hours: z.number().int().nonnegative().optional(),
   connectionName: z.string().max(120).optional(),
   sheetName: z.string().max(120).optional(),
@@ -105,6 +112,9 @@ export const ALERT_MESSAGE_PARAM_KEYS = {
   vendor_email_failed: ["sheetName", "vendorName"],
   po_stuck_submitting: ["poNo", "supplierName"],
   webhook_stuck: ["channel"],
+  dispatch_pickup_missed: ["orderNo", "shipBy", "timeZone", "hours", "channel"],
+  dispatch_overdue: ["orderNo", "shipBy", "timeZone", "channel"],
+  dispatch_overdue_unconfirmed: ["orderNo", "shipBy", "timeZone", "channel"],
 } as const satisfies Record<AlertMessageCode, readonly (keyof AlertParams)[]>;
 
 export const Alert = z.object({
