@@ -5,6 +5,7 @@ import {
   BlankVariantInput,
   Design,
   DesignInput,
+  DesignUpdateInput,
   Product,
   ProductInput,
   QA_STATUSES,
@@ -41,7 +42,7 @@ export const designs = base
       .output(Design),
     update: proc("catalog.manage")
       .route({ method: "PATCH", path: "/{id}" })
-      .input(DesignInput.partial().extend({ id: Id }))
+      .input(DesignUpdateInput)
       .output(Design),
     archive: proc("catalog.manage")
       .route({ method: "POST", path: "/{id}/archive" })

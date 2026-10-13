@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CHANNELS, LISTING_DRAFT_STATES } from "../states";
+import { DesignAiUse } from "./catalog";
 import { Cents, Id, Timestamp } from "./common";
 import { RecommendationRef, SignalSourceRef } from "./market";
 import { ImageDisclosures } from "./photos";
@@ -109,6 +110,14 @@ export const ListingDraft = z.object({
    * `content`). Optional so clients one version behind keep parsing.
    */
   imageDisclosures: ImageDisclosures.optional(),
+  /**
+   * The design AI-use value this draft's notice follows (B-274, decision 9 of spec
+   * listing-ai-disclosure): the design's live value, `unknown` if the design is gone; for
+   * `publishing`/`published` it describes what went out (`ai` if the sent content has the AI
+   * sentence, else `none`). The backend always fills it; optional so clients one version behind
+   * keep parsing. Web shows the draft's AI-notice status line from it.
+   */
+  designAiUse: DesignAiUse.optional(),
   model: z.string().nullable(),
   creditsUsed: z.number().int().nonnegative(),
   approvedBy: Id.nullable(),

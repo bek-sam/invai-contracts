@@ -81,6 +81,16 @@ export const DesignPlacementInput = z.object({
   heightIn: Inches,
 });
 
+/**
+ * What the shop says about AI use in a design's artwork (B-274, spec listing-ai-disclosure,
+ * architect ruling A3). `unknown` (nobody answered; the default for existing and new designs)
+ * and `ai` keep the AI-use notice on listing drafts; `none` drops it. `none` is the shop's own
+ * statement: InvAI never sets it and does not verify it. New values go at the end.
+ */
+export const DESIGN_AI_USES = ["unknown", "none", "ai"] as const;
+export const DesignAiUse = z.enum(DESIGN_AI_USES);
+export type DesignAiUse = z.infer<typeof DesignAiUse>;
+
 export const Design = z.object({
   id: Id,
   /** Short code used in SKUs (e.g. D1042); unique per org. */
@@ -95,6 +105,8 @@ export const Design = z.object({
   /** Text found in the artwork by OCR, used by the trademark check. */
   ocrText: z.string().nullable(),
   ordersLast30d: z.number().int().nonnegative(),
+  /** AI use as stated by the shop; always present (`unknown` until someone answers). */
+  aiUse: DesignAiUse,
   createdAt: Timestamp,
   updatedAt: Timestamp,
 });
@@ -106,7 +118,31 @@ export const DesignInput = z.object({
   tags: z.array(z.string()).default([]),
   placements: z.array(DesignPlacementInput).min(1),
   personalizationTemplateId: Id.nullable().default(null),
+  /**
+   * Optional with no `.default` on purpose: zod 4 `.partial()` keeps defaults, so a default here
+   * would fill every update. Absent on create means the backend stores `unknown`.
+   */
+  aiUse: DesignAiUse.optional(),
 });
+export type DesignInput = z.infer<typeof DesignInput>;
+
+/**
+ * Input of `designs.update` (PATCH): every field optional and **no defaults**, so an absent field
+ * keeps the stored value. `DesignInput.partial()` was used before, but zod 4 `.partial()` keeps
+ * `.default()`s, so a PATCH without `tags` or `personalizationTemplateId` parsed to `[]`/`null` and
+ * cleared them (latent until a client sends a partial body, as the AI-use control does, B-274).
+ * Same accepted shapes as before; only the parsed value of absent keys changes.
+ */
+export const DesignUpdateInput = z.object({
+  id: Id,
+  code: z.string().min(1).max(32).optional(),
+  name: z.string().min(1).optional(),
+  tags: z.array(z.string()).optional(),
+  placements: z.array(DesignPlacementInput).min(1).optional(),
+  personalizationTemplateId: Id.nullable().optional(),
+  aiUse: DesignAiUse.optional(),
+});
+export type DesignUpdateInput = z.infer<typeof DesignUpdateInput>;
 
 export const SUPPLIERS = ["ssactivewear", "sanmar", "other"] as const;
 export const Supplier = z.enum(SUPPLIERS);
