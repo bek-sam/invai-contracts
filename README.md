@@ -46,7 +46,7 @@ Namespaces (244 procedures):
 | `alerts` | `alerts` | list, mark read |
 | `orders`, `orderItems` | `orders` | Order Hub list/filters, hold/release/cancel, timeline, counts, channel performance; per-unit items, manual map, artwork override, flags |
 | `channels`, `skuRules` | `channels` | connections, Shopify OAuth / CSV connect, sync, CSV import reports, health; SKU rules CRUD, unmapped SKUs, suggestions, bulk apply |
-| `designs`, `blanks`, `products` | `catalog` | designs with placements and QA, blank variants + bulk import, products (design x blank style) |
+| `designs`, `blanks`, `products` | `catalog` | designs with placements and QA (issue codes, regions, accept/undo a warning), blank variants + bulk import, products (design x blank style) |
 | `files` | `files` | presigned upload, signed download |
 | `personalization` | `personalization` | templates CRUD + preview, item artwork list/approve/edit/re-render |
 | `production` | `production` | batch preview/build, jobs, sheets, station queue (with blank shelf/bin and transfer age), scan, QC, reprints, bins, station maintenance windows (`production.maintenance`) |

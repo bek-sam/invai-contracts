@@ -8,6 +8,7 @@ import {
   Product,
   ProductInput,
   QA_STATUSES,
+  QaWarningInput,
   SUPPLIERS,
 } from "../schemas/catalog";
 import { Id, Page, paginated } from "../schemas/common";
@@ -55,6 +56,26 @@ export const designs = base
       .route({ method: "POST", path: "/{id}/qa" })
       .input(z.object({ id: Id, cleanAlpha: z.boolean().default(false) }))
       .output(Design),
+    /**
+     * Accept a warning on one placement (B-380). Only warnings: an error must be fixed by
+     * uploading a new file. The acceptance stays while the file is the same.
+     */
+    acceptQaWarning: proc("catalog.manage")
+      .route({ method: "POST", path: "/{id}/qa/accept" })
+      .input(QaWarningInput)
+      .output(Design)
+      .errors({
+        QA_ISSUE_NOT_FOUND: { status: 404, message: "No such issue on this placement" },
+        QA_NOT_WARNING: { status: 409, message: "This problem must be fixed, not accepted" },
+      }),
+    /** Undo an accept; on an issue that is not accepted it returns the design unchanged. */
+    unacceptQaWarning: proc("catalog.manage")
+      .route({ method: "POST", path: "/{id}/qa/unaccept" })
+      .input(QaWarningInput)
+      .output(Design)
+      .errors({
+        QA_ISSUE_NOT_FOUND: { status: 404, message: "No such issue on this placement" },
+      }),
   });
 
 export const blanks = base

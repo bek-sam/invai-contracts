@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CHANNELS } from "../states";
-import { Cents, Id, Inches, Timestamp } from "./common";
+import { Cents, Id, Inches, Ratio, Timestamp } from "./common";
 
 export const PLACEMENTS = ["front", "back", "left_chest", "sleeve_left", "sleeve_right"] as const;
 export const Placement = z.enum(PLACEMENTS);
@@ -9,12 +9,55 @@ export type Placement = z.infer<typeof Placement>;
 export const QA_STATUSES = ["pending", "passed", "warn", "failed"] as const;
 export const QaStatus = z.enum(QA_STATUSES);
 
-/** Mirrors imaging POST /qa/check issue codes. */
+/**
+ * Print-file QA issue codes (mirrors imaging POST /qa/check). The last four were appended in
+ * 0.17.0 (B-380); append only, a stored code must stay readable.
+ */
+export const QA_ISSUE_CODES = [
+  "low_dpi",
+  "soft_alpha",
+  "no_alpha",
+  "tiny_file",
+  "unreadable",
+  "thin_line",
+  "small_text",
+  "white_box",
+  "non_srgb",
+] as const;
+export const QaIssueCode = z.enum(QA_ISSUE_CODES);
+export type QaIssueCode = z.infer<typeof QaIssueCode>;
+
+/** A spot on the art, as ratios 0..1 of the file's width and height (top-left origin). */
+export const QaRegion = z.object({
+  left: Ratio,
+  top: Ratio,
+  width: Ratio,
+  height: Ratio,
+});
+export type QaRegion = z.infer<typeof QaRegion>;
+
+/**
+ * One issue per code per placement; (placement, code) is the accept key. New fields are optional
+ * so cached clients and rows stored before 0.17.0 still parse.
+ */
 export const QaIssue = z.object({
-  code: z.enum(["low_dpi", "soft_alpha", "no_alpha", "tiny_file", "unreadable"]),
+  code: QaIssueCode,
   severity: z.enum(["error", "warn"]),
   message: z.string(),
+  /** Measured value in inches, unrounded (thin_line: thinnest stroke; small_text: tallest small mark). */
+  measuredIn: Inches.optional(),
+  /** Where it is on the art, at most 20 spots, for the overlay. */
+  regions: z.array(QaRegion).max(20).optional(),
+  /** Set when a person accepted this warning; kept while the file stays the same. */
+  acceptedAt: Timestamp.optional(),
+  /** Display name stored at accept time, so it still reads after a rename or removal. */
+  acceptedBy: z.string().min(1).max(200).optional(),
 });
+export type QaIssue = z.infer<typeof QaIssue>;
+
+/** Input of accept/unaccept: which issue on which placement. */
+export const QaWarningInput = z.object({ id: Id, placement: Placement, code: QaIssueCode });
+export type QaWarningInput = z.infer<typeof QaWarningInput>;
 
 export const DesignPlacement = z.object({
   placement: Placement,

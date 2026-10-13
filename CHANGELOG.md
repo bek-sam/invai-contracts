@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.17.0
+
+Print-file checks, part 1 (T-42-3, wave 42; B-380 C1, spec `specs/print-file-checks.md`). Additive only;
+minor bump per the 0.x rule. `FLOOR_COMPAT_BASELINE` stays 0.3.0 (nothing floor-facing).
+
+- **Added** `QA_ISSUE_CODES` (exported; `QaIssue.code` now uses it) with `thin_line`, `small_text`, `white_box`,
+  `non_srgb` appended last. New `QaIssueCode`, `QaRegion`, `QaWarningInput`.
+- **Added** optional `QaIssue.measuredIn` (inches), `regions` (max 20, ratios 0..1), `acceptedAt`, `acceptedBy`.
+- **Added** `catalog.designs.acceptQaWarning` (`POST /designs/{id}/qa/accept`; errors `QA_ISSUE_NOT_FOUND` 404,
+  `QA_NOT_WARNING` 409) and `unacceptQaWarning` (`/qa/unaccept`; `QA_ISSUE_NOT_FOUND`), both `catalog.manage`.
+  Implementer: backend T-42-5 (catalog). No `qaThresholds` (OI-45 A).
+- Consumers: backend `db/schema/catalog.ts` `QaIssue` mirror and `imaging/client.ts` (T-42-5); web copy by code (wave 43).
+
 ## 0.16.0
 
 Dispatch-scan guard (T-41-1, wave 41; B-143, spec `specs/dispatch-scan-guard.md`). Additive only;
