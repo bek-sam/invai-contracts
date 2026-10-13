@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.19.0
+
+Scene photo blank-colour warning (T-50-4, wave 50; B-448, architect ruling R4). Additive only; minor bump
+per the 0.x rule. `FLOOR_COMPAT_BASELINE` stays 0.3.0 (nothing floor-facing).
+
+- **Added** `"blank_color_shift"` (last) to `PHOTO_CHECK_CODES`: phase B, the restored blank differs from the
+  requested colour (CIEDE2000 over 3.0). It only ever appears with `severity: "warn"`, so it never flips
+  `PhotoChecks.passes` and never blocks approval. `detail` is `"delta_e <n>"` (one decimal, ASCII) or null;
+  web must not show `detail`. No separate `warnings` field.
+- Implementers: backend T-50-4 B (photos: map imaging `checks.warnings` in `toSceneChecks`); web T-50-4 C
+  (copy by code, en and es; `CHECK_MESSAGES` is a partial map, so nothing breaks until the copy lands).
+
+## 0.18.0
+
+Design AI use (T-48-3, wave 48; B-274, architect ruling A3). Additive; minor bump per the 0.x rule.
+`FLOOR_COMPAT_BASELINE` stays 0.3.0. Section written in wave 50 (B-442): the 0.18.0 commit f62c06e had
+no changelog entry.
+
+- **Added** `DESIGN_AI_USES` (`unknown`, `none`, `ai`) and `DesignAiUse`; `Design.aiUse` (always present).
+- **Added** optional `DesignInput.aiUse` with no default (absent on create means the backend stores `unknown`).
+- **Added** optional `ListingDraft.designAiUse`: the design's live value the draft's AI notice follows.
+- **Changed** `catalog.designs.update` input is now `DesignUpdateInput`: all fields optional with no defaults.
+  zod 4 `.partial()` kept the `tags` and template defaults, so a partial PATCH would have cleared them.
+  Accepted shapes are unchanged; only the parsed value of absent keys changes.
+
 ## 0.17.0
 
 Print-file checks, part 1 (T-42-3, wave 42; B-380 C1, spec `specs/print-file-checks.md`). Additive only;
@@ -25,6 +50,14 @@ minor bump per the 0.x rule. `FLOOR_COMPAT_BASELINE` stays 0.3.0 (nothing floor-
   `dispatchUnconfirmed`. Implementers: backend T-41-2 (today); web T-41-3 (copy and Today card).
 - No `pickupCutoff` yet (OI-44 unanswered).
 
+## 0.15.0 (backfilled wave 50)
+
+Batch download URLs (5724cc7, B-362). Additive; minor bump. Floor baseline unchanged.
+
+- **Added** `files.downloadUrls` (`POST /files/download-urls`, `files.read`, `auth: floor`): signs up to
+  `MAX_DOWNLOAD_URLS` (60) keys in one call; `DownloadUrlsInput`, `DownloadUrlsOutput` (one item per input
+  position, `download` null where the single call answers NOT_FOUND).
+
 ## 0.14.0
 
 Artwork `purged` status (T-29-5, wave 29; S-56, B-293). Additive; minor bump per the 0.x rule.
@@ -44,6 +77,24 @@ rule. No floor- or station-facing shape changes, so `FLOOR_COMPAT_BASELINE` stay
 - **Added** optional `Me.mfa { required, enabled, deadline }`.
 - **Added** `AUTH_ERROR_CODES` (`ACCOUNT_LOCKED` 423, `PASSWORD_REUSED` 400,
   `MFA_DISABLE_NOT_ALLOWED` 403) and `AccountLockedBody` (Better Auth errors, not oRPC).
+
+## 0.12.0 (backfilled wave 50)
+
+Listing photos (9026680, wave 26/27, ADR 0023). Additive; minor bump. Floor baseline unchanged.
+
+- **Added** the `photos` namespace (analyzeDesign, estimate, createSet, listSets, getSet, reviewImages,
+  exportZip, attachToDraft, pushTargets, pushToShopify), permissions `photos.read` / `photos.manage`,
+  `PHOTO_CHECK_CODES` and the photo enums, `IMAGE_DAILY_CAP_REACHED`.
+- **Added** `CREDIT_KINDS` `photo_image`, `photo_scene`; optional `ListingDraft.imageDisclosures`; outbox
+  `photo_set.created` / `photo_set.completed`; realtime `photo_set.updated`.
+
+## 0.11.0 (backfilled wave 50)
+
+Translatable alert and timeline reasons (d6d038b, T-P5-3). Additive; minor bump. Floor baseline unchanged.
+
+- **Added** `ALERT_MESSAGE_CODES`, `ALERT_MESSAGE_PARAM_KEYS`, `AlertParams` with optional
+  `Alert.messageCode` / `params`; `TIMELINE_REASON_CODES`, `TimelineReasonParams` with optional
+  `TimelineEntry.reasonCode` / `reasonParams`. No existing enum grew.
 
 ## 0.10.0
 

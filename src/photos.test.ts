@@ -16,6 +16,7 @@ import {
   PHOTO_CHECK_CODES,
   PHOTO_IMAGE_STATUSES,
   PHOTO_VIEWS,
+  PhotoCheckFailure,
   PhotoEstimate,
   PhotoImage,
   PhotoSet,
@@ -226,7 +227,11 @@ describe("photos contract (wave 26/27)", () => {
     for (const c of PHOTO_CHANNELS) expect(CHANNELS).toContain(c);
     expect(PHOTO_CHANNELS).not.toContain("csv");
     expect(PHOTO_VIEWS.at(-1)).toBe("lifestyle");
-    expect(PHOTO_CHECK_CODES.slice(-2)).toEqual(["design_drift", "region_changed"]);
+    expect(PHOTO_CHECK_CODES.slice(-3)).toEqual([
+      "design_drift",
+      "region_changed",
+      "blank_color_shift",
+    ]);
     expect(CREDIT_KINDS.slice(-2)).toEqual(["photo_image", "photo_scene"]);
     expect(presetFor("amazon", 0)).toBe("amazon_main");
     expect(presetFor("amazon", 3)).toBe("amazon_alt");
@@ -430,6 +435,25 @@ describe("photos contract (wave 26/27)", () => {
 
   it("version is at least 0.12.0 (additive, minor bump on 0.x); floor baseline untouched (ADR 0012)", () => {
     expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.12.0")).toBe(true);
+    expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
+  });
+
+  it("blank_color_shift (0.19.0, B-448): a warn failure with a locale-free detail parses; old payloads still parse", () => {
+    expect(PHOTO_CHECK_CODES.at(-1)).toBe("blank_color_shift");
+    const f = PhotoCheckFailure.parse({
+      code: "blank_color_shift",
+      severity: "warn",
+      detail: "delta_e 5.4",
+    });
+    expect(f.severity).toBe("warn");
+    expect(
+      PhotoCheckFailure.parse({ code: "blank_color_shift", severity: "warn", detail: null }).detail,
+    ).toBeNull();
+    expect(
+      PhotoCheckFailure.safeParse({ code: "design_drift", severity: "error", detail: null })
+        .success,
+    ).toBe(true);
+    expect(isContractVersionAtLeast(CONTRACT_VERSION, "0.19.0")).toBe(true);
     expect(FLOOR_COMPAT_BASELINE).toBe("0.3.0");
   });
 });

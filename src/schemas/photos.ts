@@ -127,15 +127,22 @@ export const PHOTO_CHECK_CODES = [
   "illustration_not_photo", // a drawn template where the channel wants a photograph (Amazon main)
   "design_drift", // phase B: composite vs source design below imaging's SSIM threshold
   "region_changed", // phase B: the garment outline around the print box moved after generation
+  "blank_color_shift", // phase B: restored blank differs from the requested colour, CIEDE2000 over 3.0; always `warn`, never flips `passes`
 ] as const;
 export const PhotoCheckCode = z.enum(PHOTO_CHECK_CODES);
 export type PhotoCheckCode = z.infer<typeof PhotoCheckCode>;
 
 export const PhotoCheckFailure = z.object({
   code: PhotoCheckCode,
-  /** `error` blocks approval for that channel's main slot in the UI; `warn` only informs. */
+  /**
+   * `error` blocks approval for that channel's main slot in the UI; `warn` only informs: a `warn`
+   * never changes `passes` and never blocks approval (`blank_color_shift` is always `warn`).
+   */
   severity: z.enum(["error", "warn"]),
-  /** Imaging's measured detail for the message ("fills 78%", "1400 px"); never buyer data. */
+  /**
+   * Imaging's measured detail for the message ("fills 78%", "1400 px"); never buyer data.
+   * `blank_color_shift` carries `"delta_e <n>"` (one decimal, ASCII) or null; web never shows it.
+   */
   detail: z.string().nullable(),
 });
 export type PhotoCheckFailure = z.infer<typeof PhotoCheckFailure>;
